@@ -46,7 +46,7 @@ def _image_to_png_bytes(image: Image.Image) -> bytes:
 
 
 def _confidence_badge(confidence: str | None) -> str:
-    color = {"high": "#12b981", "medium": "#d97706", "low": "#dc2626"}.get(confidence or "low", "#dc2626")
+    color = {"high": "#047857", "medium": "#92400e", "low": "#b91c1c"}.get(confidence or "low", "#b91c1c")
     return f"<span style='color:{color};font-weight:700;text-transform:uppercase;letter-spacing:.08em'>{confidence or 'low'}</span>"
 
 
@@ -319,12 +319,70 @@ def _build_css() -> str:
       box-shadow: 0 14px 28px rgba(39, 71, 217, 0.25) !important;
     }
 
-    .ink-output .prose, .ink-output .markdown {
-      line-height: 1.65 !important;
+    .ink-output {
+      color: var(--ink-text) !important;
     }
 
-    .ink-output h1, .ink-output h2, .ink-output h3 {
+    .ink-output [role="tabpanel"],
+    .ink-output .prose,
+    .ink-output .markdown,
+    .ink-output .md,
+    .ink-output .contain,
+    .ink-output .output-markdown {
+      color: var(--ink-text) !important;
+      opacity: 1 !important;
+      line-height: 1.68 !important;
+    }
+
+    .ink-output p,
+    .ink-output li,
+    .ink-output td,
+    .ink-output th {
+      color: #29231e !important;
+      opacity: 1 !important;
+      font-size: 15px !important;
+      line-height: 1.7 !important;
+    }
+
+    .ink-output h1,
+    .ink-output h2,
+    .ink-output h3 {
+      color: #15110e !important;
+      opacity: 1 !important;
       letter-spacing: -0.03em !important;
+      margin-top: 1.15rem !important;
+      margin-bottom: .55rem !important;
+    }
+
+    .ink-output h1 { font-size: 30px !important; }
+    .ink-output h2 { font-size: 21px !important; }
+    .ink-output h3 { font-size: 17px !important; color: #2747d9 !important; }
+
+    .ink-output strong {
+      color: #15110e !important;
+      font-weight: 800 !important;
+      opacity: 1 !important;
+    }
+
+    .ink-output em {
+      color: #3d342e !important;
+      opacity: 1 !important;
+      font-style: italic !important;
+    }
+
+    .ink-output hr {
+      border-color: rgba(30, 24, 18, 0.18) !important;
+      opacity: 1 !important;
+    }
+
+    .ink-output button[role="tab"] {
+      color: #5c5249 !important;
+      opacity: 1 !important;
+      font-weight: 750 !important;
+    }
+
+    .ink-output button[role="tab"][aria-selected="true"] {
+      color: #2747d9 !important;
     }
 
     table {
