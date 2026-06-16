@@ -51,8 +51,10 @@ Objective trait groups to cover exhaustively:
 {trait_lines}
 
 Interpretation guidance:
-- Write style_summary as a short persona-style reading inspired by graphology traditions, but phrase it as a low-confidence impression from handwriting style rather than a fact.
+- Write style_summary as a persona-style reading inspired by graphology traditions, but phrase it as a low-confidence impression from handwriting style rather than a fact.
+- style_summary MUST open with a memorable persona archetype in bold-friendly plain text, for example: "The Systems Builder", "The Clear-Minded Operator", or "The Careful Synthesizer". Make the archetype specific to the visible handwriting traits.
 - possible_impressions should be persona-facing bullets only: temperament, working style, communication vibe, social energy, discipline/organization, emotional presentation, or decision style when visually supportable.
+- Each possible_impressions item must connect a visible handwriting cue to a cautious persona impression, e.g. "steady baseline + even spacing could suggest a preference for organized, low-drama execution".
 - Do not put raw trait tables or technical scan notes inside possible_impressions; those belong in objective_traits and the app's Detailed Analysis section.
 - Keep personality language cautious: "may appear", "could suggest", "visual impression", "graphology-inspired reading".
 - Include alternative explanations such as pen type, scan quality, paper surface, fatigue, writing speed, language/script conventions, or copying from source.

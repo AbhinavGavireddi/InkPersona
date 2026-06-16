@@ -156,8 +156,13 @@ def mock_analysis_result() -> AnalysisResult:
             },
         },
         "interpretation": {
-            "style_summary": "The handwriting visually reads as controlled, legible, and moderately spacious. This is a cautious style impression, not a personality fact.",
-            "possible_impressions": ["may appear organized", "may appear deliberate", "may prefer clarity in written presentation"],
+            "style_summary": "The Careful Systems Builder: this handwriting visually gives a controlled, clarity-first, builder-like impression — someone who may prefer structured thinking, clean communication, and steady execution. This is a graphology-inspired style sketch, not a personality fact.",
+            "possible_impressions": [
+                "steady baseline + consistent spacing could suggest a preference for organized, low-drama execution",
+                "legible mixed print-cursive forms may appear like a practical communicator who values clarity over ornament",
+                "moderate spaciousness and clean rhythm could give a focused-but-not-rushed working-style vibe",
+                "simple letter forms and low decoration may read as direct, systems-minded, and utility-focused",
+            ],
             "alternative_explanations": ["scan quality", "pen type", "writing speed", "copying from another source", "schooling or script conventions"],
             "confidence": "low",
             "limitations": [DISCLAIMER],
