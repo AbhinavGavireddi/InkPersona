@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.traits import DISCLAIMER, OBJECTIVE_TRAIT_GROUPS
+from .traits import DISCLAIMER, OBJECTIVE_TRAIT_GROUPS
 
 
 SYSTEM_PROMPT = f"""

@@ -3,9 +3,9 @@ from __future__ import annotations
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.analyzer import ALLOWED_IMAGE_TYPES, AnalysisError, analyze_handwriting_image, mock_analysis_result
-from app.config import get_settings
-from app.traits import DISCLAIMER, OBJECTIVE_TRAIT_GROUPS
+from .analyzer import ALLOWED_IMAGE_TYPES, AnalysisError, analyze_handwriting_image, mock_analysis_result
+from .config import get_settings
+from .traits import DISCLAIMER, OBJECTIVE_TRAIT_GROUPS
 
 settings = get_settings()
 

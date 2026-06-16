@@ -1,19 +1,46 @@
+---
+title: InkPersona
+emoji: ✍️
+colorFrom: purple
+colorTo: yellow
+sdk: gradio
+sdk_version: 5.9.1
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # InkPersona
 
-InkPersona is a Vite React + FastAPI MVP for AI handwriting style analysis.
+InkPersona is a Hugging Face Spaces / Gradio app for AI handwriting style analysis.
 
-It accepts full-HD scanned handwritten documents, extracts objective handwriting traits with an OpenAI vision model, and generates cautious reflection-oriented impressions.
+It accepts a full-HD scanned handwritten document, extracts objective handwriting traits with an OpenAI vision model, and generates cautious reflection-oriented impressions.
 
-Important: handwriting alone is not a validated way to determine personality. InkPersona must not be used for clinical, hiring, legal, or high-stakes decisions.
+Important: handwriting alone is not a validated way to determine personality. InkPersona must not be used for clinical, hiring, legal, school, employment, or other high-stakes decisions.
 
-## Stack
+## Hugging Face Space setup
 
-- Frontend: Vite + React
-- Backend: FastAPI
-- Model API: OpenAI vision model
-- Dataset strategy: IAM/CVL/RIMES/KHATT/Bentham-style handwriting datasets for objective feature evaluation; graphology/personality-labeled datasets only as weak exploratory leads unless validated.
+Create a Gradio Space, then push this repo with these root files:
 
-## Setup
+- `app.py`
+- `requirements.txt`
+- `backend/`
+- `datasets/`
+- `README.md`
+
+Add Space Secrets in Hugging Face:
+
+- `OPENAI_API_KEY`: your OpenAI API key
+
+Optional Space Variables:
+
+- `OPENAI_MODEL`: default `gpt-4o-mini`
+- `OPENAI_TEMPERATURE`: default `0.2`
+- `OPENAI_MAX_OUTPUT_TOKENS`: default `3500`
+
+After adding secrets, restart the Space.
+
+## Local Gradio run
 
 1. Copy env:
 
@@ -27,42 +54,22 @@ cp .env.example .env
 OPENAI_API_KEY=your_key_here
 ```
 
-3. Backend:
+3. Install and run:
 
 ```bash
-cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+python app.py
 ```
 
-4. Frontend:
+Open the printed local Gradio URL.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+You can also run without an API key by enabling “Use demo result instead of live OpenAI call.”
 
-Open: http://localhost:5173
+## Objective trait coverage
 
-## Environment variables
-
-See `.env.example` for every required variable.
-
-Key variables:
-
-- `OPENAI_API_KEY`: OpenAI API key for live analysis.
-- `OPENAI_MODEL`: default `gpt-4o-mini`.
-- `INKPERSONA_MAX_UPLOAD_MB`: upload limit.
-- `INKPERSONA_ALLOWED_ORIGINS`: CORS origins.
-- `VITE_API_BASE_URL`: frontend API target.
-- `VITE_ENABLE_MOCK_ANALYSIS`: enables demo result button.
-
-## Objective trait groups
-
-InkPersona covers:
+InkPersona covers 66 objective traits across:
 
 - image quality
 - layout
@@ -75,23 +82,31 @@ InkPersona covers:
 
 Full registry lives in `backend/app/traits.py` and `datasets/dataset-registry.json`.
 
-## API
+## API / legacy webapp files
 
-- `GET /health`
-- `GET /traits`
-- `GET /mock-analysis`
-- `POST /analyze` with multipart `file` JPEG/PNG/WEBP
+This repo still contains the earlier Vite React + FastAPI MVP under:
+
+- `frontend/`
+- `backend/app/main.py`
+
+For Hugging Face deployment, the root `app.py` Gradio app is the deployment entrypoint.
 
 ## Tests
 
-Backend:
+Root / Gradio tests:
+
+```bash
+pytest tests
+```
+
+Backend tests:
 
 ```bash
 cd backend
 pytest
 ```
 
-Frontend:
+Legacy frontend tests:
 
 ```bash
 cd frontend
@@ -109,3 +124,24 @@ The system prompt requires:
 - no deterministic personality claims
 - no protected/high-stakes claims
 - no medical/clinical/hiring judgments
+
+The app may say:
+
+- “visible handwriting traits”
+- “possible style impression”
+- “low-confidence self-reflection”
+
+The app must not say:
+
+- “true personality detected”
+- “diagnosis”
+- “hire / do not hire”
+- “mental illness detected”
+- “intelligence measured”
+- “criminality / honesty inferred”
+
+## Dataset notes
+
+IAM, CVL, RIMES, KHATT, and historical handwriting collections are useful for testing handwriting feature extraction. They are not personality ground truth.
+
+Community graphology datasets should be treated as weak exploratory leads unless audited and paired with validated questionnaire labels.

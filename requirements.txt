@@ -1,0 +1,8 @@
+gradio==5.9.1
+openai==1.59.8
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+pillow==11.1.0
+requests==2.32.3
+pytest==8.3.4

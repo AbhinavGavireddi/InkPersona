@@ -5,9 +5,9 @@ import json
 from typing import Any
 from openai import AsyncOpenAI
 
-from app.config import Settings
-from app.prompt import SYSTEM_PROMPT, build_user_prompt
-from app.traits import AnalysisResult, DISCLAIMER
+from .config import Settings
+from .prompt import SYSTEM_PROMPT, build_user_prompt
+from .traits import AnalysisResult, DISCLAIMER
 
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
