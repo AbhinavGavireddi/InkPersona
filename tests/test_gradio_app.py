@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from app import SAMPLE_IMAGE_PATH, _has_live_openai_key, _image_to_png_bytes, analyze_for_gradio, build_app, format_report, load_sample_image
+from app import SAMPLE_IMAGE_PATH, EMPTY_REPORT, _has_live_openai_key, _image_to_png_bytes, analyze_for_gradio, build_app, format_report, load_sample_image
 from backend.app.analyzer import mock_analysis_result
 
 
@@ -73,6 +73,10 @@ def test_gradio_app_builds_with_clean_ui_and_sample_example():
     demo = build_app()
     config_text = str(demo.config)
     assert "InkPersona" in config_text
-    assert "Use sample handwriting image" in config_text
+    assert "Load sample image" in config_text
+    assert "Reading desk" in config_text
+    assert "Use static demo result" in config_text
+    assert "Ready for a handwriting sample" in config_text
+    assert EMPTY_REPORT.startswith("# Ready")
     assert "Persona report" in config_text
     assert "Structured JSON" in config_text
