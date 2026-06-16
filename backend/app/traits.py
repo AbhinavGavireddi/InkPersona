@@ -1,16 +1,84 @@
 from __future__ import annotations
 
-from typing import Literal
-from pydantic import BaseModel, Field
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 Confidence = Literal["low", "medium", "high"]
 Severity = Literal["none", "low", "medium", "high"]
+
+
+def _coerce_confidence(value: Any, default: str = "low") -> str:
+    normalized = str(value or default).strip().lower()
+    aliases = {
+        "none": "low",
+        "n/a": "low",
+        "na": "low",
+        "unknown": "low",
+        "uncertain": "low",
+        "moderate": "medium",
+        "med": "medium",
+    }
+    normalized = aliases.get(normalized, normalized)
+    return normalized if normalized in {"low", "medium", "high"} else default
+
+
+def _coerce_severity(value: Any, default: str = "low") -> str:
+    normalized = str(value or default).strip().lower()
+    aliases = {
+        "n/a": "none",
+        "na": "none",
+        "unknown": "low",
+        "uncertain": "low",
+        "moderate": "medium",
+        "med": "medium",
+    }
+    normalized = aliases.get(normalized, normalized)
+    return normalized if normalized in {"none", "low", "medium", "high"} else default
+
+
+def _coerce_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value).strip()
+    if not text or text.lower() in {"none", "n/a", "na", "not applicable"}:
+        return []
+    return [text]
 
 
 class TraitObservation(BaseModel):
     value: str = Field(..., description="Observed value, range, or 'not reliably detectable'.")
     confidence: Confidence
     evidence: str = Field(..., description="Visible evidence from the scan; no hidden psychological claim.")
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_model_shorthand(cls, value: Any) -> Any:
+        if isinstance(value, cls):
+            return value
+        if isinstance(value, dict):
+            data = dict(value)
+            data["value"] = str(data.get("value", data.get("observation", "not assessed"))).strip() or "not assessed"
+            data["confidence"] = _coerce_confidence(data.get("confidence"), default="low")
+            data["evidence"] = str(
+                data.get(
+                    "evidence",
+                    "Model returned this observation without scan-specific evidence; treat as low-confidence.",
+                )
+            ).strip()
+            return data
+        return {
+            "value": str(value).strip() or "not assessed",
+            "confidence": "low",
+            "evidence": "Model returned a shorthand observation without scan-specific evidence; treat as low-confidence.",
+        }
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def normalize_confidence(cls, value: Any) -> str:
+        return _coerce_confidence(value, default="low")
 
 
 class ImageQuality(BaseModel):
@@ -121,11 +189,31 @@ class Interpretation(BaseModel):
     confidence: Confidence
     limitations: list[str]
 
+    @field_validator("possible_impressions", "alternative_explanations", "limitations", mode="before")
+    @classmethod
+    def normalize_lists(cls, value: Any) -> list[str]:
+        return _coerce_list(value)
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def normalize_confidence(cls, value: Any) -> str:
+        return _coerce_confidence(value, default="low")
+
 
 class SafetyReview(BaseModel):
     overclaiming_risk: Severity
     rejected_claims: list[str] = Field(default_factory=list)
     required_disclaimer: str
+
+    @field_validator("overclaiming_risk", mode="before")
+    @classmethod
+    def normalize_overclaiming_risk(cls, value: Any) -> str:
+        return _coerce_severity(value, default="low")
+
+    @field_validator("rejected_claims", mode="before")
+    @classmethod
+    def normalize_rejected_claims(cls, value: Any) -> list[str]:
+        return _coerce_list(value)
 
 
 class AnalysisResult(BaseModel):
@@ -135,6 +223,11 @@ class AnalysisResult(BaseModel):
     interpretation: Interpretation
     safety_review: SafetyReview
     recommended_next_steps: list[str]
+
+    @field_validator("recommended_next_steps", mode="before")
+    @classmethod
+    def normalize_next_steps(cls, value: Any) -> list[str]:
+        return _coerce_list(value)
 
 
 OBJECTIVE_TRAIT_GROUPS: dict[str, list[str]] = {
