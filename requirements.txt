@@ -12,7 +12,6 @@ anyio==4.14.0
     #   httpx
     #   openai
     #   starlette
-    #   watchfiles
 certifi==2026.5.20
     # via
     #   httpcore
@@ -29,13 +28,10 @@ colorama==0.4.6 ; sys_platform == 'win32'
     # via
     #   click
     #   tqdm
-    #   uvicorn
 distro==1.9.0
     # via openai
 fastapi==0.115.6
-    # via
-    #   gradio
-    #   inkpersona
+    # via gradio
 ffmpy==1.0.0
     # via gradio
 filelock==3.29.4
@@ -56,8 +52,6 @@ hf-xet==1.5.1 ; platform_machine == 'AMD64' or platform_machine == 'aarch64' or 
     # via huggingface-hub
 httpcore==1.0.9
     # via httpx
-httptools==0.8.0
-    # via uvicorn
 httpx==0.28.1
     # via
     #   gradio
@@ -126,18 +120,14 @@ python-dotenv==1.0.1
     # via
     #   inkpersona
     #   pydantic-settings
-    #   uvicorn
 python-multipart==0.0.20
-    # via
-    #   gradio
-    #   inkpersona
+    # via gradio
 pytz==2026.2
     # via pandas
 pyyaml==6.0.3
     # via
     #   gradio
     #   huggingface-hub
-    #   uvicorn
 requests==2.32.3
     # via inkpersona
 rich==15.0.0
@@ -184,15 +174,7 @@ urllib3==2.7.0
     # via
     #   gradio
     #   requests
-uvicorn==0.34.0
-    # via
-    #   gradio
-    #   inkpersona
-uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
-    # via uvicorn
-watchfiles==1.2.0
-    # via uvicorn
+uvicorn==0.34.0 ; sys_platform != 'emscripten'
+    # via gradio
 websockets==14.2
-    # via
-    #   gradio-client
-    #   uvicorn
+    # via gradio-client

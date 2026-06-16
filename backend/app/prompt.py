@@ -28,11 +28,24 @@ def build_user_prompt() -> str:
 Analyze this full-page scanned handwritten document for InkPersona.
 
 Return JSON with:
-1. document_type
-2. objective_traits grouped exactly as below
-3. interpretation with style_summary, possible_impressions, alternative_explanations, confidence, limitations
-4. safety_review with overclaiming_risk, rejected_claims, required_disclaimer
-5. recommended_next_steps
+1. product_name: "InkPersona"
+2. document_type
+3. objective_traits grouped exactly as below
+4. interpretation with style_summary, possible_impressions, alternative_explanations, confidence, limitations
+5. safety_review with overclaiming_risk, rejected_claims, required_disclaimer
+6. recommended_next_steps
+
+Every objective trait value MUST be an object with exactly this shape:
+{{"value": "observed value", "confidence": "low|medium|high", "evidence": "visible scan evidence"}}
+
+Do NOT return shorthand strings for traits. Wrong: "resolution": "high". Correct: "resolution": {{"value": "high", "confidence": "medium", "evidence": "scan appears sharp enough to inspect letter forms"}}.
+
+All of these fields MUST be arrays of strings, even if there is only one item:
+- possible_impressions
+- alternative_explanations
+- limitations
+- rejected_claims
+- recommended_next_steps
 
 Objective trait groups to cover exhaustively:
 {trait_lines}

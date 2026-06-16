@@ -1,5 +1,5 @@
-from app.traits import AnalysisResult, OBJECTIVE_TRAIT_GROUPS, DISCLAIMER
-from app.analyzer import mock_analysis_result
+from backend.app.analyzer import mock_analysis_result
+from backend.app.traits import DISCLAIMER, OBJECTIVE_TRAIT_GROUPS, AnalysisResult
 
 
 def test_trait_registry_includes_core_objective_traits():
