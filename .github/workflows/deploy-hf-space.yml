@@ -15,7 +15,6 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.11"
-  NODE_VERSION: "20"
   HF_SPACE_REPO: AbhinavGavireddi/inkPersona
 
 jobs:
@@ -37,22 +36,11 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
       - name: Install Python dependencies
         run: uv sync --group dev
 
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Run full verification
-        run: npm test
+      - name: Run Python verification
+        run: uv run pytest
 
   deploy:
     name: Deploy to Hugging Face Space

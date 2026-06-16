@@ -70,53 +70,43 @@ You can also run without an API key by enabling “Use demo result instead of li
 To refresh Hugging Face's `requirements.txt` after changing `pyproject.toml`:
 
 ```bash
+uv lock
 uv export --no-dev --format requirements-txt --no-hashes --output-file requirements.txt
 ```
 
-## Objective trait coverage
+## Project structure
 
-InkPersona covers 66 objective traits across:
+```text
+app.py                    # Gradio Space entrypoint
+backend/app/analyzer.py   # OpenAI vision call + mock demo analysis
+backend/app/config.py     # Runtime settings
+backend/app/prompt.py     # Safety-bounded analysis prompt
+backend/app/traits.py     # Objective trait schema and disclaimer
+datasets/                 # Dataset notes/registry for evaluation planning
+tests/                    # Gradio app tests
+backend/tests/            # Shared backend module tests
+```
 
-- image quality
-- layout
-- size and proportion
-- slant and baseline
-- spacing
-- stroke and pressure cues
-- letter form
-- consistency and legibility
-
-Full registry lives in `backend/app/traits.py` and `datasets/dataset-registry.json`.
-
-## API / legacy webapp files
-
-This repo still contains the earlier Vite React + FastAPI MVP under:
-
-- `frontend/`
-- `backend/app/main.py`
-
-For Hugging Face deployment, the root `app.py` Gradio app is the deployment entrypoint.
+This repo is Gradio-first. The earlier React/Vite frontend and FastAPI API prototype were removed to keep deployment simple and Python-only.
 
 ## Tests
 
-Root / Gradio tests:
+Run all Python verification:
+
+```bash
+uv run pytest
+```
+
+Run only Gradio tests:
 
 ```bash
 uv run pytest tests
 ```
 
-Backend tests:
+Run only backend module tests:
 
 ```bash
-uv run pytest backend
-```
-
-Legacy frontend tests:
-
-```bash
-cd frontend
-npm test
-npm run build
+uv run pytest backend/tests
 ```
 
 ## Safety policy
