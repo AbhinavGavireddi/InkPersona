@@ -1,6 +1,8 @@
+from pathlib import Path
+
 from PIL import Image
 
-from app import _image_to_png_bytes, analyze_for_gradio, format_report
+from app import SAMPLE_IMAGE_PATH, _image_to_png_bytes, analyze_for_gradio, build_app, format_report
 from backend.app.analyzer import mock_analysis_result
 
 
@@ -36,3 +38,21 @@ def test_image_conversion_outputs_png_bytes():
     content = _image_to_png_bytes(image)
     assert content.startswith(b"\x89PNG")
     assert len(content) > 50
+
+
+def test_sample_handwriting_image_is_available_and_readable():
+    assert isinstance(SAMPLE_IMAGE_PATH, Path)
+    assert SAMPLE_IMAGE_PATH.exists()
+    image = Image.open(SAMPLE_IMAGE_PATH)
+    assert image.format == "JPEG"
+    assert image.size[0] >= 1000
+    assert image.size[1] >= 400
+
+
+def test_gradio_app_builds_with_clean_ui_and_sample_example():
+    demo = build_app()
+    config_text = str(demo.config)
+    assert "InkPersona" in config_text
+    assert "Use sample handwriting image" in config_text
+    assert "Persona report" in config_text
+    assert "Structured JSON" in config_text

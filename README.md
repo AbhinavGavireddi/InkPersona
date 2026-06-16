@@ -65,7 +65,7 @@ uv run python app.py
 
 Open the printed local Gradio URL.
 
-You can also run without an API key by enabling “Use demo result instead of live OpenAI call.”
+You can also run without an API key by enabling “Use demo result instead of live OpenAI call.” The app includes a built-in sample image, `assets/sample-andrej-karpathy-handwriting.jpg`, so visitors can try the upload flow immediately.
 
 To refresh Hugging Face's `requirements.txt` after changing `pyproject.toml`:
 
@@ -77,7 +77,8 @@ uv export --no-dev --format requirements-txt --no-hashes --output-file requireme
 ## Project structure
 
 ```text
-app.py                    # Gradio Space entrypoint
+app.py                    # Gradio Space entrypoint and custom UI
+assets/                   # Built-in sample handwriting images
 backend/app/analyzer.py   # OpenAI vision call + mock demo analysis
 backend/app/config.py     # Runtime settings
 backend/app/prompt.py     # Safety-bounded analysis prompt
