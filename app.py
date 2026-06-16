@@ -66,29 +66,47 @@ def format_report(result: AnalysisResult) -> str:
     safety = payload["safety_review"]
     objective_traits = payload["objective_traits"]
 
-    possible = "\n".join(f"- {item}" for item in interpretation.get("possible_impressions", [])) or "- No reliable impressions."
+    possible = "\n".join(f"- {item}" for item in interpretation.get("possible_impressions", [])) or "- No reliable persona impressions."
+    limitations = "\n".join(f"- {item}" for item in interpretation.get("limitations", [])) or f"- {DISCLAIMER}"
     alternatives = "\n".join(f"- {item}" for item in interpretation.get("alternative_explanations", [])) or "- Not listed."
     next_steps = "\n".join(f"- {item}" for item in payload.get("recommended_next_steps", [])) or "- Upload a clearer scan."
     rejected = "\n".join(f"- {item}" for item in safety.get("rejected_claims", [])) or "- No forbidden claims produced."
     trait_sections = "\n".join(_format_trait_group(name, traits) for name, traits in objective_traits.items())
 
     return f"""
-# InkPersona Report
+# InkPersona Persona Reading
 
-**Document type:** {payload.get('document_type', 'handwritten document')}  
-**Interpretation confidence:** {_confidence_badge(interpretation.get('confidence'))}
+**Persona confidence:** {_confidence_badge(interpretation.get('confidence'))}
 
-## Style summary
+## Core persona impression
 
-{interpretation.get('style_summary', 'No summary returned.')}
+{interpretation.get('style_summary', 'No persona summary returned.')}
 
-## Possible impressions, not facts
+## What the handwriting may suggest
 
 {possible}
+
+## Reading boundary
+
+This is a graphology-inspired handwriting persona reading, not a psychological diagnosis or scientific personality test.
+
+---
+
+# Detailed Analysis
+
+**Document type:** {payload.get('document_type', 'handwritten document')}
+
+## Why this persona was inferred
+
+The persona reading above is based on visible handwriting traits such as slant, spacing, baseline stability, letter form, rhythm, layout, legibility, and stroke behavior.
 
 ## Alternative explanations
 
 {alternatives}
+
+## Limitations
+
+{limitations}
 
 ## Safety limits
 
@@ -101,8 +119,6 @@ def format_report(result: AnalysisResult) -> str:
 ## Recommended next steps
 
 {next_steps}
-
----
 
 ## Objective trait observations
 
@@ -151,7 +167,7 @@ def build_app() -> gr.Blocks:
             <div class='ink-hero'>
               <h1>{APP_TITLE}</h1>
               <h3>{APP_SUBTITLE}</h3>
-              <p class='ink-note'>Upload a full-HD scanned handwritten page. InkPersona extracts {trait_count} objective handwriting traits before giving cautious, low-confidence style impressions.</p>
+              <p class='ink-note'>Upload a full-HD scanned handwritten page. InkPersona returns a persona-first graphology-inspired reading, then places the {trait_count} objective handwriting observations in a separate Detailed Analysis section.</p>
               <p class='ink-danger'>{DISCLAIMER}</p>
               <p class='ink-note'>{SAFE_USE_NOTE}</p>
               <p class='ink-note'>OpenAI secret status at launch: <strong>{secret_status}</strong></p>
