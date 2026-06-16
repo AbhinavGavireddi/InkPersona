@@ -14,13 +14,16 @@ from backend.app.analyzer import AnalysisError, analyze_handwriting_image, mock_
 from backend.app.config import Settings
 from backend.app.traits import AnalysisResult, DISCLAIMER, OBJECTIVE_TRAIT_GROUPS
 
-load_dotenv(Path(__file__).with_name(".env"))
+ROOT_DIR = Path(__file__).resolve().parent
+SAMPLE_IMAGE_PATH = ROOT_DIR / "assets" / "sample-andrej-karpathy-handwriting.jpg"
+
+load_dotenv(ROOT_DIR / ".env")
 
 APP_TITLE = "InkPersona"
-APP_SUBTITLE = "AI handwriting style analysis with scientific humility."
+APP_SUBTITLE = "Handwriting style readings with receipts, not overclaims."
 SAFE_USE_NOTE = (
-    "Do not upload sensitive documents. Images are processed by this Space runtime and, "
-    "for live analysis, sent to the configured vision model provider."
+    "Avoid sensitive documents during public testing. Live analysis sends the uploaded image "
+    "to the configured vision model provider."
 )
 
 
@@ -43,8 +46,8 @@ def _image_to_png_bytes(image: Image.Image) -> bytes:
 
 
 def _confidence_badge(confidence: str | None) -> str:
-    color = {"high": "#40d48a", "medium": "#f5c451", "low": "#ff7b9c"}.get(confidence or "low", "#ff7b9c")
-    return f"<span style='color:{color};font-weight:700;text-transform:uppercase'>{confidence or 'low'}</span>"
+    color = {"high": "#12b981", "medium": "#d97706", "low": "#dc2626"}.get(confidence or "low", "#dc2626")
+    return f"<span style='color:{color};font-weight:700;text-transform:uppercase;letter-spacing:.08em'>{confidence or 'low'}</span>"
 
 
 def _format_trait_group(group_name: str, observations: dict[str, Any]) -> str:
@@ -53,11 +56,15 @@ def _format_trait_group(group_name: str, observations: dict[str, Any]) -> str:
         value = observation.get("value", "Not assessed")
         confidence = _confidence_badge(observation.get("confidence"))
         evidence = observation.get("evidence", "No evidence provided.")
-        rows.append(
-            f"| {name.replace('_', ' ').title()} | {value} | {confidence} | {evidence} |"
-        )
-    table = "\n".join(rows)
-    return f"\n### {group_name.replace('_', ' ').title()}\n\n| Trait | Observation | Confidence | Evidence |\n|---|---:|---:|---|\n{table}\n"
+        label = name.replace("_", " ").title()
+        rows.append(f"- **{label}:** {value} · {confidence}\n  _Evidence:_ {evidence}")
+    body = "\n".join(rows)
+    return f"\n### {group_name.replace('_', ' ').title()}\n\n{body}\n"
+
+def load_sample_image() -> tuple[Image.Image | None, bool]:
+    if not SAMPLE_IMAGE_PATH.exists():
+        return None, True
+    return Image.open(SAMPLE_IMAGE_PATH), True
 
 
 def format_report(result: AnalysisResult) -> str:
@@ -132,10 +139,10 @@ def analyze_for_gradio(image: Image.Image | None, use_demo: bool) -> tuple[str, 
         return format_report(result), result.model_dump()
 
     if image is None:
-        return "Upload a handwritten scan first, or enable demo mode.", {}
+        return "Upload a handwritten scan first, choose the sample, or enable demo mode.", {}
 
     settings = _settings()
-    if not settings.openai_api_key or settings.openai_api_key.startswith("replace_with"):
+    if not settings.openai_api_key or settings.openai_api_key.startswith("replace_with") or settings.openai_api_key == "placeholder":
         return (
             "OPENAI_API_KEY is not configured. Add it in Hugging Face Space Settings → Secrets, "
             "then restart the Space. You can still use demo mode locally.",
@@ -150,45 +157,263 @@ def analyze_for_gradio(image: Image.Image | None, use_demo: bool) -> tuple[str, 
         return f"Analysis failed: {exc}", {}
 
 
-def build_app() -> gr.Blocks:
-    trait_count = sum(len(items) for items in OBJECTIVE_TRAIT_GROUPS.values())
-    configured = bool(os.getenv("OPENAI_API_KEY")) and not os.getenv("OPENAI_API_KEY", "").startswith("replace_with")
-    secret_status = "configured" if configured else "not configured"
+def _build_css() -> str:
+    return """
+    :root {
+      --ink-bg: #f7f4ef;
+      --ink-surface: rgba(255, 255, 255, 0.86);
+      --ink-line: rgba(30, 24, 18, 0.12);
+      --ink-text: #1d1a17;
+      --ink-muted: #6f675f;
+      --ink-blue: #2747d9;
+      --ink-blue-soft: rgba(39, 71, 217, 0.10);
+      --ink-amber: #b87912;
+      --ink-green: #0f8f68;
+    }
 
-    css = """
-    .ink-hero {border: 1px solid rgba(255,255,255,.12); border-radius: 24px; padding: 24px; background: linear-gradient(135deg, rgba(126,87,255,.14), rgba(255,255,255,.04));}
-    .ink-note {color: #b8b8c8; font-size: 0.95rem;}
-    .ink-danger {border-left: 4px solid #f5c451; padding-left: 12px; color: #f8df8a;}
+    .gradio-container {
+      max-width: 1180px !important;
+      margin: 0 auto !important;
+      background:
+        radial-gradient(circle at top left, rgba(39, 71, 217, 0.12), transparent 34rem),
+        linear-gradient(180deg, #fbfaf7 0%, var(--ink-bg) 100%) !important;
+      color: var(--ink-text) !important;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    }
+
+    .ink-hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--ink-line);
+      border-radius: 32px;
+      padding: 34px;
+      margin: 8px 0 20px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.94), rgba(250,247,241,.88)),
+        repeating-linear-gradient(0deg, transparent 0 30px, rgba(39,71,217,.07) 31px 32px);
+      box-shadow: 0 24px 70px rgba(29, 26, 23, 0.09);
+    }
+
+    .ink-hero:after {
+      content: "";
+      position: absolute;
+      width: 230px;
+      height: 230px;
+      right: -80px;
+      top: -70px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(39,71,217,.20), transparent 68%);
+      pointer-events: none;
+    }
+
+    .ink-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--ink-line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,.72);
+      color: var(--ink-muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .ink-title {
+      margin: 18px 0 10px;
+      font-size: clamp(42px, 7vw, 78px);
+      line-height: .9;
+      letter-spacing: -0.065em;
+      font-weight: 850;
+      color: var(--ink-text);
+    }
+
+    .ink-title span { color: var(--ink-blue); }
+
+    .ink-lede {
+      max-width: 760px;
+      color: #4a433d;
+      font-size: clamp(17px, 2vw, 22px);
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .ink-proof-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .ink-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--ink-line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: rgba(255,255,255,.76);
+      color: #39332e;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .ink-card {
+      border: 1px solid var(--ink-line) !important;
+      border-radius: 24px !important;
+      padding: 18px !important;
+      background: var(--ink-surface) !important;
+      box-shadow: 0 16px 50px rgba(29, 26, 23, 0.06) !important;
+    }
+
+    .ink-section-title {
+      margin: 0 0 8px;
+      color: var(--ink-text);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .ink-helper {
+      color: var(--ink-muted);
+      font-size: 14px;
+      line-height: 1.55;
+      margin: 0 0 14px;
+    }
+
+    .ink-note {
+      color: var(--ink-muted);
+      font-size: 13px;
+      line-height: 1.55;
+      border-left: 3px solid var(--ink-blue);
+      padding: 10px 0 10px 12px;
+      background: var(--ink-blue-soft);
+      border-radius: 0 14px 14px 0;
+    }
+
+    .ink-boundary {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid rgba(184,121,18,.22);
+      border-radius: 18px;
+      background: rgba(184,121,18,.08);
+      color: #67480f;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .ink-sample-caption {
+      color: var(--ink-muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    #analyze-btn {
+      border-radius: 16px !important;
+      min-height: 48px !important;
+      font-weight: 800 !important;
+      background: linear-gradient(135deg, #1d3fd1, #5f35d8) !important;
+      border: 0 !important;
+      box-shadow: 0 14px 28px rgba(39, 71, 217, 0.25) !important;
+    }
+
+    .ink-output .prose, .ink-output .markdown {
+      line-height: 1.65 !important;
+    }
+
+    .ink-output h1, .ink-output h2, .ink-output h3 {
+      letter-spacing: -0.03em !important;
+    }
+
+    table {
+      border-radius: 14px !important;
+      overflow: hidden !important;
+    }
+
+    @media (max-width: 760px) {
+      .ink-hero { padding: 24px; border-radius: 24px; }
+      .ink-proof-row { gap: 8px; }
+      .ink-pill { width: 100%; justify-content: center; }
+    }
     """
 
-    with gr.Blocks(title=APP_TITLE, css=css, theme=gr.themes.Soft(primary_hue="purple", neutral_hue="slate")) as demo:
+
+def build_app() -> gr.Blocks:
+    trait_count = sum(len(items) for items in OBJECTIVE_TRAIT_GROUPS.values())
+    configured = bool(os.getenv("OPENAI_API_KEY")) and not os.getenv("OPENAI_API_KEY", "").startswith("replace_with") and os.getenv("OPENAI_API_KEY") != "placeholder"
+    secret_status = "Live AI ready" if configured else "Demo mode ready"
+    secret_icon = "●"
+
+    with gr.Blocks(
+        title=APP_TITLE,
+        css=_build_css(),
+        theme=gr.themes.Soft(primary_hue="indigo", neutral_hue="slate", radius_size="lg"),
+    ) as demo:
         gr.HTML(
             f"""
-            <div class='ink-hero'>
-              <h1>{APP_TITLE}</h1>
-              <h3>{APP_SUBTITLE}</h3>
-              <p class='ink-note'>Upload a full-HD scanned handwritten page. InkPersona returns a persona-first graphology-inspired reading, then places the {trait_count} objective handwriting observations in a separate Detailed Analysis section.</p>
-              <p class='ink-danger'>{DISCLAIMER}</p>
-              <p class='ink-note'>{SAFE_USE_NOTE}</p>
-              <p class='ink-note'>OpenAI secret status at launch: <strong>{secret_status}</strong></p>
-            </div>
+            <section class='ink-hero'>
+              <div class='ink-kicker'>✍️ Graphology-inspired · evidence-aware</div>
+              <h1 class='ink-title'>Ink<span>Persona</span></h1>
+              <p class='ink-lede'>{APP_SUBTITLE} Upload a handwriting sample and get a persona-first reading backed by {trait_count} visible handwriting observations.</p>
+              <div class='ink-proof-row'>
+                <div class='ink-pill'>{secret_icon} {secret_status}</div>
+                <div class='ink-pill'>66 objective traits</div>
+                <div class='ink-pill'>Persona first, evidence below</div>
+                <div class='ink-pill'>No diagnosis · no hiring claims</div>
+              </div>
+            </section>
             """
         )
-        with gr.Row():
-            with gr.Column(scale=1):
-                image = gr.Image(type="pil", label="Handwritten document scan", sources=["upload", "clipboard"])
-                use_demo = gr.Checkbox(value=False, label="Use demo result instead of live OpenAI call")
-                analyze = gr.Button("Analyze handwriting", variant="primary")
-                gr.Markdown(
-                    "**Best input:** clean, uncropped JPEG/PNG/WEBP scan at 1080p or higher. Avoid private documents during public testing."
+
+        with gr.Row(equal_height=False):
+            with gr.Column(scale=5, elem_classes=["ink-card"]):
+                gr.HTML(
+                    """
+                    <h2 class='ink-section-title'>1. Add handwriting</h2>
+                    <p class='ink-helper'>Upload a clean photo/scan, or try the built-in Andrej Karpathy note sample we tested with.</p>
+                    """
                 )
-            with gr.Column(scale=2):
-                report = gr.Markdown(label="Report")
-                raw_json = gr.JSON(label="Structured JSON")
+                image = gr.Image(
+                    type="pil",
+                    label="Handwritten document scan",
+                    sources=["upload", "clipboard"],
+                    height=310,
+                )
+                use_demo = gr.Checkbox(
+                    value=not configured,
+                    label="Use demo result instead of live OpenAI call",
+                    info="Keep this on if OPENAI_API_KEY is not configured. Turn it off for live analysis.",
+                )
+                sample = gr.Button("Use sample handwriting image", variant="secondary")
+                gr.HTML("<p class='ink-sample-caption'>Sample: blue-ink cursive note about Andrej Karpathy and vibe-coding. Click the sample button, then Analyze handwriting.</p>")
+                analyze = gr.Button("Analyze handwriting", variant="primary", elem_id="analyze-btn")
+                gr.HTML(
+                    f"""
+                    <div class='ink-note'><strong>Best input:</strong> uncropped JPEG/PNG/WEBP, 1080p or higher. {SAFE_USE_NOTE}</div>
+                    <div class='ink-boundary'><strong>Boundary:</strong> {DISCLAIMER}</div>
+                    """
+                )
+
+            with gr.Column(scale=7, elem_classes=["ink-card", "ink-output"]):
+                gr.HTML(
+                    """
+                    <h2 class='ink-section-title'>2. Read the result</h2>
+                    <p class='ink-helper'>The report starts with the persona-style impression, then shows evidence, alternatives, limitations, and structured JSON.</p>
+                    """
+                )
+                with gr.Tabs():
+                    with gr.Tab("Persona report"):
+                        report = gr.Markdown(label="Report")
+                    with gr.Tab("Structured JSON"):
+                        raw_json = gr.JSON(label="Structured JSON")
+                gr.HTML(
+                    "<p class='ink-sample-caption'>Tip: if the live model returns imperfect JSON, InkPersona normalizes common shorthand safely before rendering.</p>"
+                )
+
+        sample.click(load_sample_image, outputs=[image, use_demo])
         analyze.click(analyze_for_gradio, inputs=[image, use_demo], outputs=[report, raw_json])
-        gr.Markdown(
-            "Tip: enable demo mode to verify the UI without an API key. Disable it after adding `OPENAI_API_KEY` in Hugging Face Space Secrets."
-        )
     return demo
 
 
