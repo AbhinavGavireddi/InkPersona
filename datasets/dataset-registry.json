@@ -1,0 +1,82 @@
+{
+  "product": "InkPersona",
+  "dataset_policy": "Use datasets only according to their licenses/terms. Do not treat graphology labels as scientific ground truth without independent validation.",
+  "recommended_for_mvp": [
+    {
+      "name": "IAM Handwriting Database",
+      "type": "handwriting recognition / writer variation",
+      "use": "Evaluate whether prompts consistently extract objective handwriting traits across many writers.",
+      "personality_ground_truth": false,
+      "license_note": "Requires registration/terms review. Do not redistribute raw samples without permission."
+    },
+    {
+      "name": "CVL Database",
+      "type": "writer identification / handwriting variation",
+      "use": "Test full-page scan handling, writer diversity, and visual trait stability.",
+      "personality_ground_truth": false,
+      "license_note": "Verify academic/commercial terms before use."
+    },
+    {
+      "name": "RIMES",
+      "type": "French handwritten letters/forms",
+      "use": "Test document-layout and multi-line handwriting extraction.",
+      "personality_ground_truth": false,
+      "license_note": "Verify distribution and usage terms."
+    },
+    {
+      "name": "KHATT",
+      "type": "Arabic handwriting",
+      "use": "Test non-Latin script behavior and avoid Latin-only assumptions.",
+      "personality_ground_truth": false,
+      "license_note": "Verify distribution and usage terms."
+    },
+    {
+      "name": "Bentham / READ historical handwriting collections",
+      "type": "historical handwritten manuscripts",
+      "use": "Stress-test scan quality, ink/paper artifacts, older scripts.",
+      "personality_ground_truth": false,
+      "license_note": "Review collection-specific terms."
+    }
+  ],
+  "graphology_or_personality_labeled_leads": [
+    {
+      "name": "Kaggle graphology / handwriting personality datasets",
+      "type": "community datasets, often small and inconsistently labeled",
+      "use": "Only exploratory prompt testing; never claim scientific validity from these labels alone.",
+      "personality_ground_truth": "weak_or_unknown",
+      "quality_warning": "Labels may be subjective graphology categories rather than validated Big Five/personality instruments. Audit carefully before use."
+    },
+    {
+      "name": "Handwriting + Big Five self-report collection to be built in-product",
+      "type": "future first-party consented dataset",
+      "use": "Best path for empirical validation: collect writing samples plus standardized questionnaire scores with explicit consent.",
+      "personality_ground_truth": "possible_if_questionnaire_validated",
+      "quality_warning": "Requires consent, privacy policy, demographic bias checks, and correlation/evaluation reporting."
+    }
+  ],
+  "evaluation_tags": [
+    "right_slant",
+    "left_slant",
+    "vertical_slant",
+    "stable_baseline",
+    "wavy_baseline",
+    "ascending_baseline",
+    "descending_baseline",
+    "large_letters",
+    "small_letters",
+    "wide_word_spacing",
+    "tight_word_spacing",
+    "high_legibility",
+    "low_legibility",
+    "crowding",
+    "heavy_pressure_visible",
+    "light_pressure_visible",
+    "high_consistency",
+    "low_consistency",
+    "mixed_print_cursive",
+    "mostly_cursive",
+    "mostly_print",
+    "poor_scan_quality",
+    "possible_multiple_writers"
+  ]
+}
