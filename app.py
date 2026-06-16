@@ -61,10 +61,18 @@ def _format_trait_group(group_name: str, observations: dict[str, Any]) -> str:
     body = "\n".join(rows)
     return f"\n### {group_name.replace('_', ' ').title()}\n\n{body}\n"
 
+def _has_live_openai_key() -> bool:
+    key = os.getenv("OPENAI_API_KEY", "").strip()
+    return bool(key) and not key.startswith("replace_with") and key != "placeholder"
+
+
 def load_sample_image() -> tuple[Image.Image | None, bool]:
+    """Load the bundled sample without forcing demo mode when live AI is configured."""
     if not SAMPLE_IMAGE_PATH.exists():
         return None, True
-    return Image.open(SAMPLE_IMAGE_PATH), True
+    with Image.open(SAMPLE_IMAGE_PATH) as image:
+        sample_image = image.convert("RGB").copy()
+    return sample_image, not _has_live_openai_key()
 
 
 def format_report(result: AnalysisResult) -> str:
@@ -84,6 +92,10 @@ def format_report(result: AnalysisResult) -> str:
 # InkPersona Persona Reading
 
 **Persona confidence:** {_confidence_badge(interpretation.get('confidence'))}
+
+## Persona lens
+
+This reads like a **graphology-inspired persona sketch** — a vibe-level reflection from the handwriting style, not a factual personality verdict.
 
 ## Core persona impression
 
@@ -400,7 +412,7 @@ def _build_css() -> str:
 
 def build_app() -> gr.Blocks:
     trait_count = sum(len(items) for items in OBJECTIVE_TRAIT_GROUPS.values())
-    configured = bool(os.getenv("OPENAI_API_KEY")) and not os.getenv("OPENAI_API_KEY", "").startswith("replace_with") and os.getenv("OPENAI_API_KEY") != "placeholder"
+    configured = _has_live_openai_key()
     secret_status = "Live AI ready" if configured else "Demo mode ready"
     secret_icon = "●"
 
@@ -441,8 +453,8 @@ def build_app() -> gr.Blocks:
                 )
                 use_demo = gr.Checkbox(
                     value=not configured,
-                    label="Use demo result instead of live OpenAI call",
-                    info="Keep this on if OPENAI_API_KEY is not configured. Turn it off for live analysis.",
+                    label="Use demo result instead of live LLM call",
+                    info="OFF = always call the configured OpenAI vision model. ON = local static demo only; no cache or LLM call.",
                 )
                 sample = gr.Button("Use sample handwriting image", variant="secondary")
                 gr.HTML("<p class='ink-sample-caption'>Sample: blue-ink cursive note about Andrej Karpathy and vibe-coding. Click the sample button, then Analyze handwriting.</p>")
