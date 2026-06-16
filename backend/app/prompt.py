@@ -35,6 +35,10 @@ Return JSON with:
 5. safety_review with overclaiming_risk, rejected_claims, required_disclaimer
 6. recommended_next_steps
 
+Every objective trait group MUST be a JSON object keyed by trait name, not an array.
+Wrong: "image_quality": [{{"value": "medium", "confidence": "medium", "evidence": "..."}}]
+Correct: "image_quality": {{"resolution": {{"value": "medium", "confidence": "medium", "evidence": "..."}}, "blur": {{...}}}}
+
 Every objective trait value MUST be an object with exactly this shape:
 {{"value": "observed value", "confidence": "low|medium|high", "evidence": "visible scan evidence"}}
 

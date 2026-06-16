@@ -52,6 +52,44 @@ def test_analysis_result_accepts_model_shorthand_trait_strings():
     assert result.recommended_next_steps == ["Upload another clean sample for comparison."]
 
 
+def test_analysis_result_accepts_live_model_trait_groups_as_lists():
+    payload = {
+        "product_name": "InkPersona",
+        "document_type": "handwritten photo",
+        "objective_traits": {
+            group: [
+                {
+                    "value": f"observed {trait}",
+                    "confidence": "medium",
+                    "evidence": f"Visible evidence for {trait}.",
+                }
+                for trait in traits
+            ]
+            for group, traits in OBJECTIVE_TRAIT_GROUPS.items()
+        },
+        "interpretation": {
+            "style_summary": "The Systems Builder: a cautious persona impression from visible traits.",
+            "possible_impressions": ["steady rhythm could suggest organized execution"],
+            "alternative_explanations": ["pen type", "writing speed"],
+            "confidence": "low",
+            "limitations": [DISCLAIMER],
+        },
+        "safety_review": {
+            "overclaiming_risk": "low",
+            "rejected_claims": ["No diagnosis"],
+            "required_disclaimer": DISCLAIMER,
+        },
+        "recommended_next_steps": ["Upload another clean sample for comparison."],
+    }
+
+    result = AnalysisResult.model_validate(payload)
+
+    assert result.objective_traits.image_quality.resolution.value == "observed resolution"
+    assert result.objective_traits.image_quality.multiple_writers_possible.evidence == "Visible evidence for multiple_writers_possible."
+    assert result.objective_traits.layout.page_margins.value == "observed page_margins"
+    assert result.objective_traits.consistency_and_legibility.spelling_or_written_content_relevance.confidence == "medium"
+
+
 def test_analysis_result_fills_missing_trait_evidence_and_normalizes_confidence():
     payload = {
         "value": "smooth",

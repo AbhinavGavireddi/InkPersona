@@ -25,6 +25,17 @@ SAFE_USE_NOTE = (
     "Avoid sensitive documents during public testing. Live analysis sends the uploaded image "
     "to the configured vision model provider."
 )
+EMPTY_REPORT = """
+# Ready for a handwriting sample
+
+Load the sample image or upload a clean page. The reading will appear here in three layers:
+
+- Persona sketch: the first-pass handwriting impression
+- Evidence: visible traits such as spacing, baseline, rhythm, slant, and form
+- Boundaries: alternative explanations and claims InkPersona refuses to make
+
+Use static demo for a quick UI preview. Turn it off when an OpenAI key is configured to call the live vision model.
+""".strip()
 
 
 def _settings() -> Settings:
@@ -172,167 +183,336 @@ def analyze_for_gradio(image: Image.Image | None, use_demo: bool) -> tuple[str, 
 def _build_css() -> str:
     return """
     :root {
-      --ink-bg: #f7f4ef;
-      --ink-surface: rgba(255, 255, 255, 0.86);
-      --ink-line: rgba(30, 24, 18, 0.12);
-      --ink-text: #1d1a17;
-      --ink-muted: #6f675f;
-      --ink-blue: #2747d9;
-      --ink-blue-soft: rgba(39, 71, 217, 0.10);
-      --ink-amber: #b87912;
-      --ink-green: #0f8f68;
+      --ink-paper: #f5f2ec;
+      --ink-panel: #fffdf8;
+      --ink-panel-2: #fbf7ef;
+      --ink-rule: rgba(36, 30, 24, 0.14);
+      --ink-rule-strong: rgba(36, 30, 24, 0.24);
+      --ink-text: #191612;
+      --ink-muted: #696055;
+      --ink-faint: #968d82;
+      --ink-blue: #193bd1;
+      --ink-blue-dark: #10247a;
+      --ink-blue-wash: rgba(25, 59, 209, 0.075);
+      --ink-green: #0b6f4f;
+      --ink-amber: #8f5b08;
+      --ink-red: #9f1d1d;
+      --ink-shadow: 0 20px 80px rgba(32, 25, 17, 0.08);
     }
 
     .gradio-container {
-      max-width: 1180px !important;
+      max-width: 1760px !important;
+      width: calc(100vw - 28px) !important;
+      min-height: 100vh !important;
       margin: 0 auto !important;
+      padding: 14px !important;
       background:
-        radial-gradient(circle at top left, rgba(39, 71, 217, 0.12), transparent 34rem),
-        linear-gradient(180deg, #fbfaf7 0%, var(--ink-bg) 100%) !important;
+        linear-gradient(90deg, rgba(25, 59, 209, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(25, 59, 209, 0.035) 1px, transparent 1px),
+        var(--ink-paper) !important;
+      background-size: 32px 32px, 32px 32px, auto !important;
       color: var(--ink-text) !important;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif !important;
     }
 
-    .ink-hero {
-      position: relative;
+    .main,
+    .wrap,
+    .contain,
+    .gradio-container > .contain {
+      max-width: none !important;
+      width: 100% !important;
+    }
+
+    .ink-shell {
+      display: grid !important;
+      grid-template-columns: minmax(280px, 0.72fr) minmax(520px, 1.65fr) !important;
+      gap: 16px;
+      min-height: calc(100vh - 34px);
+      align-items: stretch;
       overflow: hidden;
-      border: 1px solid var(--ink-line);
-      border-radius: 32px;
-      padding: 34px;
-      margin: 8px 0 20px;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.94), rgba(250,247,241,.88)),
-        repeating-linear-gradient(0deg, transparent 0 30px, rgba(39,71,217,.07) 31px 32px);
-      box-shadow: 0 24px 70px rgba(29, 26, 23, 0.09);
     }
 
-    .ink-hero:after {
+    .ink-shell > *,
+    .ink-grid > *,
+    .ink-brand-panel,
+    .ink-work-panel,
+    .ink-card,
+    .ink-output,
+    .ink-output-card {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .ink-brand-panel,
+    .ink-work-panel {
+      border: 1px solid var(--ink-rule) !important;
+      background: rgba(255, 253, 248, 0.92) !important;
+      box-shadow: var(--ink-shadow) !important;
+      backdrop-filter: blur(16px);
+    }
+
+    .ink-brand-panel {
+      border-radius: 28px !important;
+      padding: 22px !important;
+      position: sticky;
+      top: 14px;
+      min-height: calc(100vh - 34px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .ink-brand-panel:before {
       content: "";
       position: absolute;
-      width: 230px;
-      height: 230px;
-      right: -80px;
-      top: -70px;
-      border-radius: 999px;
-      background: radial-gradient(circle, rgba(39,71,217,.20), transparent 68%);
+      inset: 12px;
+      border-radius: 22px;
+      border: 1px solid rgba(25, 59, 209, 0.10);
       pointer-events: none;
     }
 
-    .ink-kicker {
-      display: inline-flex;
+    .ink-brand-mark {
+      display: flex;
       align-items: center;
-      gap: 8px;
-      border: 1px solid var(--ink-line);
-      border-radius: 999px;
-      padding: 8px 12px;
-      background: rgba(255,255,255,.72);
+      justify-content: space-between;
+      gap: 12px;
       color: var(--ink-muted);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: .08em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: .14em;
       text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ink-live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ink-green);
+      box-shadow: 0 0 0 4px rgba(11, 111, 79, 0.12);
+      display: inline-block;
+      margin-right: 8px;
     }
 
     .ink-title {
-      margin: 18px 0 10px;
-      font-size: clamp(42px, 7vw, 78px);
-      line-height: .9;
-      letter-spacing: -0.065em;
-      font-weight: 850;
+      position: relative;
+      z-index: 1;
+      margin: 52px 0 16px;
+      max-width: 560px;
       color: var(--ink-text);
+      font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+      font-size: clamp(52px, 8.2vw, 128px);
+      line-height: .82;
+      letter-spacing: -0.075em;
+      font-weight: 540;
     }
 
-    .ink-title span { color: var(--ink-blue); }
+    .ink-title span {
+      display: block;
+      color: var(--ink-blue);
+      font-style: italic;
+      transform: translateX(.08em);
+    }
 
     .ink-lede {
-      max-width: 760px;
-      color: #4a433d;
-      font-size: clamp(17px, 2vw, 22px);
-      line-height: 1.45;
+      position: relative;
+      z-index: 1;
+      max-width: 610px;
+      color: #443b32;
+      font-size: clamp(16px, 1.45vw, 21px);
+      line-height: 1.5;
+      letter-spacing: -0.015em;
       margin: 0;
     }
 
-    .ink-proof-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 24px;
+    .ink-proof-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      border: 1px solid var(--ink-rule);
+      background: var(--ink-rule);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 30px;
     }
 
-    .ink-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid var(--ink-line);
+    .ink-proof-cell {
+      min-height: 82px;
+      padding: 14px;
+      background: rgba(255, 253, 248, 0.74);
+    }
+
+    .ink-proof-label {
+      color: var(--ink-faint);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .ink-proof-value {
+      color: var(--ink-text);
+      font-size: 15px;
+      font-weight: 760;
+      line-height: 1.25;
+    }
+
+    .ink-specimen-rail {
+      position: relative;
+      z-index: 1;
+      margin-top: 28px;
+      border-top: 1px solid var(--ink-rule);
+      padding-top: 18px;
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .ink-specimen-index {
+      height: 54px;
+      border: 1px solid var(--ink-rule-strong);
       border-radius: 999px;
-      padding: 9px 12px;
-      background: rgba(255,255,255,.76);
-      color: #39332e;
-      font-size: 14px;
-      font-weight: 650;
+      display: grid;
+      place-items: center;
+      color: var(--ink-blue);
+      font-family: ui-serif, Georgia, serif;
+      font-size: 22px;
+      font-style: italic;
+      background: var(--ink-blue-wash);
+    }
+
+    .ink-specimen-copy {
+      color: var(--ink-muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .ink-work-panel {
+      border-radius: 28px !important;
+      padding: 14px !important;
+      min-height: calc(100vh - 34px);
+    }
+
+    .ink-grid {
+      display: grid !important;
+      grid-template-columns: minmax(280px, .58fr) minmax(0, 1fr) !important;
+      gap: 14px !important;
+      min-height: calc(100vh - 62px);
+      align-items: stretch !important;
     }
 
     .ink-card {
-      border: 1px solid var(--ink-line) !important;
-      border-radius: 24px !important;
+      border: 1px solid var(--ink-rule) !important;
+      border-radius: 22px !important;
       padding: 18px !important;
-      background: var(--ink-surface) !important;
-      box-shadow: 0 16px 50px rgba(29, 26, 23, 0.06) !important;
+      background: rgba(255, 253, 248, 0.78) !important;
+      box-shadow: none !important;
+    }
+
+    .ink-input-card,
+    .ink-output-card {
+      min-height: calc(100vh - 92px);
+    }
+
+    .ink-input-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ink-output-card {
+      display: flex;
+      flex-direction: column;
+      background:
+        linear-gradient(90deg, rgba(25,59,209,.055) 1px, transparent 1px),
+        var(--ink-panel) !important;
+      background-size: 28px 28px, auto !important;
     }
 
     .ink-section-title {
-      margin: 0 0 8px;
+      margin: 0 0 6px;
       color: var(--ink-text);
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
+      font-family: ui-serif, Georgia, Cambria, serif;
+      font-size: 25px;
+      font-weight: 520;
+      letter-spacing: -0.035em;
     }
 
     .ink-helper {
       color: var(--ink-muted);
       font-size: 14px;
       line-height: 1.55;
-      margin: 0 0 14px;
+      margin: 0 0 16px;
     }
 
-    .ink-note {
-      color: var(--ink-muted);
-      font-size: 13px;
-      line-height: 1.55;
-      border-left: 3px solid var(--ink-blue);
-      padding: 10px 0 10px 12px;
-      background: var(--ink-blue-soft);
-      border-radius: 0 14px 14px 0;
+    .ink-note,
+    .ink-boundary {
+      color: #4c4238;
+      font-size: 12.5px;
+      line-height: 1.5;
+      padding: 12px 13px;
+      border: 1px solid var(--ink-rule);
+      border-radius: 16px;
+      background: rgba(251, 247, 239, 0.82);
     }
 
     .ink-boundary {
-      margin-top: 14px;
-      padding: 14px;
-      border: 1px solid rgba(184,121,18,.22);
-      border-radius: 18px;
-      background: rgba(184,121,18,.08);
-      color: #67480f;
-      font-size: 13px;
-      line-height: 1.55;
+      margin-top: 10px;
+      border-color: rgba(143, 91, 8, 0.22);
+      background: rgba(143, 91, 8, 0.07);
+      color: #5a3d0b;
     }
 
     .ink-sample-caption {
       color: var(--ink-muted);
-      font-size: 13px;
+      font-size: 12.5px;
+      line-height: 1.45;
       margin-top: 8px;
+    }
+
+    .ink-mode-strip {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin: 14px 0;
     }
 
     #analyze-btn {
       border-radius: 16px !important;
-      min-height: 48px !important;
-      font-weight: 800 !important;
-      background: linear-gradient(135deg, #1d3fd1, #5f35d8) !important;
-      border: 0 !important;
-      box-shadow: 0 14px 28px rgba(39, 71, 217, 0.25) !important;
+      min-height: 54px !important;
+      font-weight: 820 !important;
+      background: #191612 !important;
+      border: 1px solid #191612 !important;
+      color: #fffdf8 !important;
+      box-shadow: 0 12px 26px rgba(25, 22, 18, 0.18) !important;
+    }
+
+    #analyze-btn:hover {
+      background: var(--ink-blue) !important;
+      border-color: var(--ink-blue) !important;
+    }
+
+    button.secondary,
+    .secondary button {
+      border-radius: 14px !important;
     }
 
     .ink-output {
       color: var(--ink-text) !important;
+    }
+
+    .ink-output [role="tabpanel"] {
+      min-height: calc(100vh - 224px) !important;
+      overflow: auto !important;
+      padding-right: 8px !important;
+      max-width: 100% !important;
     }
 
     .ink-output [role="tabpanel"],
@@ -344,6 +524,9 @@ def _build_css() -> str:
       color: var(--ink-text) !important;
       opacity: 1 !important;
       line-height: 1.68 !important;
+      max-width: 74ch !important;
+      overflow-wrap: anywhere !important;
+      word-break: normal !important;
     }
 
     .ink-output p,
@@ -361,14 +544,18 @@ def _build_css() -> str:
     .ink-output h3 {
       color: #15110e !important;
       opacity: 1 !important;
-      letter-spacing: -0.03em !important;
-      margin-top: 1.15rem !important;
+      letter-spacing: -0.035em !important;
+      margin-top: 1.05rem !important;
       margin-bottom: .55rem !important;
     }
 
-    .ink-output h1 { font-size: 30px !important; }
-    .ink-output h2 { font-size: 21px !important; }
-    .ink-output h3 { font-size: 17px !important; color: #2747d9 !important; }
+    .ink-output h1 {
+      font-family: ui-serif, Georgia, Cambria, serif !important;
+      font-size: 34px !important;
+      font-weight: 520 !important;
+    }
+    .ink-output h2 { font-size: 20px !important; }
+    .ink-output h3 { font-size: 16px !important; color: var(--ink-blue-dark) !important; }
 
     .ink-output strong {
       color: #15110e !important;
@@ -391,10 +578,18 @@ def _build_css() -> str:
       color: #5c5249 !important;
       opacity: 1 !important;
       font-weight: 750 !important;
+      border-radius: 12px !important;
     }
 
     .ink-output button[role="tab"][aria-selected="true"] {
-      color: #2747d9 !important;
+      color: var(--ink-blue) !important;
+      background: var(--ink-blue-wash) !important;
+    }
+
+    .image-container,
+    .image-frame,
+    .image-preview {
+      border-radius: 16px !important;
     }
 
     table {
@@ -402,10 +597,24 @@ def _build_css() -> str:
       overflow: hidden !important;
     }
 
-    @media (max-width: 760px) {
-      .ink-hero { padding: 24px; border-radius: 24px; }
-      .ink-proof-row { gap: 8px; }
-      .ink-pill { width: 100%; justify-content: center; }
+    @media (max-width: 1180px) {
+      .gradio-container { width: calc(100vw - 16px) !important; padding: 8px !important; }
+      .ink-shell { grid-template-columns: 1fr; }
+      .ink-brand-panel { position: relative; top: 0; min-height: auto; }
+      .ink-title { margin-top: 30px; font-size: clamp(54px, 13vw, 98px); }
+      .ink-work-panel { min-height: auto; }
+      .ink-grid { grid-template-columns: 1fr !important; min-height: auto; }
+      .ink-input-card, .ink-output-card { min-height: auto; }
+      .ink-output [role="tabpanel"] { min-height: 520px !important; }
+    }
+
+    @media (max-width: 720px) {
+      .ink-brand-panel, .ink-work-panel { border-radius: 20px !important; padding: 14px !important; }
+      .ink-proof-grid { grid-template-columns: 1fr; }
+      .ink-specimen-rail { grid-template-columns: 42px 1fr; }
+      .ink-specimen-index { width: 42px; height: 42px; font-size: 18px; }
+      .ink-card { border-radius: 18px !important; padding: 14px !important; }
+      .ink-section-title { font-size: 22px; }
     }
     """
 
@@ -421,66 +630,88 @@ def build_app() -> gr.Blocks:
         css=_build_css(),
         theme=gr.themes.Soft(primary_hue="indigo", neutral_hue="slate", radius_size="lg"),
     ) as demo:
-        gr.HTML(
-            f"""
-            <section class='ink-hero'>
-              <div class='ink-kicker'>✍️ Graphology-inspired · evidence-aware</div>
-              <h1 class='ink-title'>Ink<span>Persona</span></h1>
-              <p class='ink-lede'>{APP_SUBTITLE} Upload a handwriting sample and get a persona-first reading backed by {trait_count} visible handwriting observations.</p>
-              <div class='ink-proof-row'>
-                <div class='ink-pill'>{secret_icon} {secret_status}</div>
-                <div class='ink-pill'>66 objective traits</div>
-                <div class='ink-pill'>Persona first, evidence below</div>
-                <div class='ink-pill'>No diagnosis · no hiring claims</div>
-              </div>
-            </section>
-            """
-        )
-
-        with gr.Row(equal_height=False):
-            with gr.Column(scale=5, elem_classes=["ink-card"]):
-                gr.HTML(
-                    """
-                    <h2 class='ink-section-title'>1. Add handwriting</h2>
-                    <p class='ink-helper'>Upload a clean photo/scan, or try the built-in Andrej Karpathy note sample we tested with.</p>
-                    """
-                )
-                image = gr.Image(
-                    type="pil",
-                    label="Handwritten document scan",
-                    sources=["upload", "clipboard"],
-                    height=310,
-                )
-                use_demo = gr.Checkbox(
-                    value=not configured,
-                    label="Use demo result instead of live LLM call",
-                    info="OFF = always call the configured OpenAI vision model. ON = local static demo only; no cache or LLM call.",
-                )
-                sample = gr.Button("Use sample handwriting image", variant="secondary")
-                gr.HTML("<p class='ink-sample-caption'>Sample: blue-ink cursive note about Andrej Karpathy and vibe-coding. Click the sample button, then Analyze handwriting.</p>")
-                analyze = gr.Button("Analyze handwriting", variant="primary", elem_id="analyze-btn")
+        with gr.Row(equal_height=False, elem_classes=["ink-shell"]):
+            with gr.Column(scale=3, elem_classes=["ink-brand-panel"]):
                 gr.HTML(
                     f"""
-                    <div class='ink-note'><strong>Best input:</strong> uncropped JPEG/PNG/WEBP, 1080p or higher. {SAFE_USE_NOTE}</div>
-                    <div class='ink-boundary'><strong>Boundary:</strong> {DISCLAIMER}</div>
+                    <div class='ink-brand-mark'>
+                      <span>InkPersona / handwriting lab</span>
+                      <span><i class='ink-live-dot'></i>{secret_status}</span>
+                    </div>
+                    <div>
+                      <h1 class='ink-title'>Ink<span>Persona</span></h1>
+                      <p class='ink-lede'>A quieter handwriting-reading desk: upload a sample, get a persona-style interpretation first, then inspect the visible traits behind it.</p>
+                      <div class='ink-proof-grid'>
+                        <div class='ink-proof-cell'>
+                          <div class='ink-proof-label'>Mode</div>
+                          <div class='ink-proof-value'>{secret_icon} {secret_status}</div>
+                        </div>
+                        <div class='ink-proof-cell'>
+                          <div class='ink-proof-label'>Coverage</div>
+                          <div class='ink-proof-value'>{trait_count} visible handwriting traits</div>
+                        </div>
+                        <div class='ink-proof-cell'>
+                          <div class='ink-proof-label'>Output</div>
+                          <div class='ink-proof-value'>Persona first, evidence below</div>
+                        </div>
+                        <div class='ink-proof-cell'>
+                          <div class='ink-proof-label'>Boundary</div>
+                          <div class='ink-proof-value'>No diagnosis · no hiring claims</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class='ink-specimen-rail'>
+                      <div class='ink-specimen-index'>Aa</div>
+                      <p class='ink-specimen-copy'>{APP_SUBTITLE} Designed as a reading desk, not a chatbot page: document on the left, report on the right, evidence always within reach.</p>
+                    </div>
                     """
                 )
 
-            with gr.Column(scale=7, elem_classes=["ink-card", "ink-output"]):
-                gr.HTML(
-                    """
-                    <h2 class='ink-section-title'>2. Read the result</h2>
-                    <p class='ink-helper'>The report starts with the persona-style impression, then shows evidence, alternatives, limitations, and structured JSON.</p>
-                    """
-                )
-                with gr.Tabs():
-                    with gr.Tab("Persona report"):
-                        report = gr.Markdown(label="Report")
-                    with gr.Tab("Structured JSON"):
-                        raw_json = gr.JSON(label="Structured JSON")
-                gr.HTML(
-                    "<p class='ink-sample-caption'>Tip: if the live model returns imperfect JSON, InkPersona normalizes common shorthand safely before rendering.</p>"
-                )
+            with gr.Column(scale=9, elem_classes=["ink-work-panel"]):
+                with gr.Row(equal_height=True, elem_classes=["ink-grid"]):
+                    with gr.Column(scale=4, elem_classes=["ink-card", "ink-input-card"]):
+                        gr.HTML(
+                            """
+                            <h2 class='ink-section-title'>Add handwriting</h2>
+                            <p class='ink-helper'>Use a clean page photo or the built-in Andrej Karpathy sample. The live/demo switch below makes the model path explicit.</p>
+                            """
+                        )
+                        image = gr.Image(
+                            type="pil",
+                            label="Handwritten document scan",
+                            sources=["upload", "clipboard"],
+                            height=430,
+                        )
+                        use_demo = gr.Checkbox(
+                            value=not configured,
+                            label="Use static demo result",
+                            info="Off calls the configured OpenAI vision model. On uses the local demo only; no cache, no LLM call.",
+                        )
+                        sample = gr.Button("Load sample image", variant="secondary")
+                        gr.HTML("<p class='ink-sample-caption'>Sample: blue-ink cursive note about Andrej Karpathy and vibe-coding. Load it, then choose demo or live analysis.</p>")
+                        analyze = gr.Button("Read handwriting", variant="primary", elem_id="analyze-btn")
+                        gr.HTML(
+                            f"""
+                            <div class='ink-note'><strong>Best input:</strong> uncropped JPEG/PNG/WEBP, 1080p or higher. {SAFE_USE_NOTE}</div>
+                            <div class='ink-boundary'><strong>Boundary:</strong> {DISCLAIMER}</div>
+                            """
+                        )
+
+                    with gr.Column(scale=8, elem_classes=["ink-card", "ink-output-card", "ink-output"]):
+                        gr.HTML(
+                            """
+                            <h2 class='ink-section-title'>Reading desk</h2>
+                            <p class='ink-helper'>The report uses the wide panel: persona interpretation first, then alternatives, limitations, and structured JSON.</p>
+                            """
+                        )
+                        with gr.Tabs():
+                            with gr.Tab("Persona report"):
+                                report = gr.Markdown(value=EMPTY_REPORT, label="Report")
+                            with gr.Tab("Structured JSON"):
+                                raw_json = gr.JSON(label="Structured JSON")
+                        gr.HTML(
+                            "<p class='ink-sample-caption'>If live output returns imperfect JSON, InkPersona normalizes common shorthand before rendering.</p>"
+                        )
 
         sample.click(load_sample_image, outputs=[image, use_demo])
         analyze.click(analyze_for_gradio, inputs=[image, use_demo], outputs=[report, raw_json])
@@ -491,3 +722,4 @@ demo = build_app()
 
 if __name__ == "__main__":
     demo.launch()
+
