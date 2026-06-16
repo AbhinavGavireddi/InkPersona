@@ -10,7 +10,9 @@ authors = [
 ]
 dependencies = [
   "gradio==5.9.1",
+  "numpy==2.2.1",
   "openai==1.59.8",
+  "opencv-python-headless==4.10.0.84",
   "pillow==11.1.0",
   "pydantic==2.10.4",
   "pydantic-settings==2.7.1",

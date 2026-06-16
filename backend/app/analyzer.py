@@ -6,6 +6,7 @@ from typing import Any
 from openai import AsyncOpenAI
 
 from .config import Settings
+from .preprocessing import preprocess_handwriting_image
 from .prompt import SYSTEM_PROMPT, build_user_prompt
 from .traits import AnalysisResult, DISCLAIMER
 
@@ -33,7 +34,10 @@ def ensure_safe_key(settings: Settings) -> str:
 
 async def analyze_handwriting_image(content: bytes, content_type: str, settings: Settings) -> AnalysisResult:
     api_key = ensure_safe_key(settings)
-    data_url = encode_data_url(content, content_type)
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise AnalysisError("Unsupported image type. Upload JPEG, PNG, or WEBP.")
+    preprocessed = preprocess_handwriting_image(content)
+    data_url = encode_data_url(preprocessed.content, preprocessed.content_type)
     client = AsyncOpenAI(api_key=api_key, timeout=settings.inkpersona_request_timeout_seconds)
 
     response = await client.chat.completions.create(
@@ -46,7 +50,7 @@ async def analyze_handwriting_image(content: bytes, content_type: str, settings:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": build_user_prompt()},
+                    {"type": "text", "text": build_user_prompt(preprocessed.summary)},
                     {"type": "image_url", "image_url": {"url": data_url, "detail": "high"}},
                 ],
             },

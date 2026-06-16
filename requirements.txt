@@ -80,11 +80,15 @@ markupsafe==2.1.5
     #   jinja2
 mdurl==0.1.2
     # via markdown-it-py
-numpy==2.4.6
+numpy==2.2.1
     # via
     #   gradio
+    #   inkpersona
+    #   opencv-python-headless
     #   pandas
 openai==1.59.8
+    # via inkpersona
+opencv-python-headless==4.10.0.84
     # via inkpersona
 orjson==3.11.9
     # via gradio

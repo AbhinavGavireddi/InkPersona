@@ -67,6 +67,20 @@ Open the printed local Gradio URL.
 
 You can also run without an API key by enabling “Use demo result instead of live OpenAI call.” The app includes a built-in sample image, `assets/sample-andrej-karpathy-handwriting.jpg`, so visitors can try the upload flow immediately.
 
+## Image preprocessing
+
+Before a live LLM call, InkPersona now runs a graphology-project-inspired cleanup pipeline adapted from the linked Medium post:
+
+- crop excess white margin around the handwriting
+- normalize scan width while preserving aspect ratio
+- apply bilateral denoising to reduce scan noise while preserving stroke edges
+- convert to grayscale and normalize contrast
+- apply inverted Otsu/global binarization for high-contrast foreground extraction
+- use dilation-assisted contour detection and affine rotation to deskew the writing area
+- compute compact horizontal/vertical projection metadata such as ink density, estimated line bands, margins, and text-area ratio
+
+The LLM receives the cleaned high-contrast PNG plus a short preprocessing summary in the prompt. This improves readability and consistency, but it does not make graphology scientifically validated; the safety policy still applies.
+
 To refresh Hugging Face's `requirements.txt` after changing `pyproject.toml`:
 
 ```bash
@@ -81,6 +95,7 @@ app.py                    # Gradio Space entrypoint and custom UI
 assets/                   # Built-in sample handwriting images
 backend/app/analyzer.py   # OpenAI vision call + mock demo analysis
 backend/app/config.py     # Runtime settings
+backend/app/preprocessing.py # Graphology-inspired scan cleanup before live LLM calls
 backend/app/prompt.py     # Safety-bounded analysis prompt
 backend/app/traits.py     # Objective trait schema and disclaimer
 datasets/                 # Dataset notes/registry for evaluation planning

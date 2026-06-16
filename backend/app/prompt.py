@@ -20,13 +20,21 @@ Required disclaimer: {DISCLAIMER}
 """.strip()
 
 
-def build_user_prompt() -> str:
+def build_user_prompt(preprocessing_summary: str | None = None) -> str:
     trait_lines = "\n".join(
         f"- {group}: {', '.join(names)}" for group, names in OBJECTIVE_TRAIT_GROUPS.items()
     )
+    preprocessing_note = (
+        "\nPreprocessing applied before this image reached you:\n"
+        f"{preprocessing_summary}\n"
+        "Use the cleaned image for readability, but treat projection metadata only as supporting visual context. "
+        "Do not overstate personality certainty from preprocessing-derived measurements.\n"
+        if preprocessing_summary
+        else ""
+    )
     return f"""
 Analyze this full-page scanned handwritten document for InkPersona.
-
+{preprocessing_note}
 Return JSON with:
 1. product_name: "InkPersona"
 2. document_type
