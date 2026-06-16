@@ -164,12 +164,12 @@ def mock_analysis_result() -> AnalysisResult:
             },
         },
         "interpretation": {
-            "style_summary": "The Careful Systems Builder: this handwriting visually gives a controlled, clarity-first, builder-like impression — someone who may prefer structured thinking, clean communication, and steady execution. This is a graphology-inspired style sketch, not a personality fact.",
+            "style_summary": "The Controlled Systems Builder: this handwriting visually reads as organized and clarity-oriented, but also somewhat restrained and risk-averse. It may point to someone who prefers structure and clean execution, while potentially coming across as rigid, cautious, or less spontaneous under pressure. This is a graphology-inspired style sketch, not a personality fact.",
             "possible_impressions": [
-                "steady baseline + consistent spacing could suggest a preference for organized, low-drama execution",
-                "legible mixed print-cursive forms may appear like a practical communicator who values clarity over ornament",
-                "moderate spaciousness and clean rhythm could give a focused-but-not-rushed working-style vibe",
-                "simple letter forms and low decoration may read as direct, systems-minded, and utility-focused",
+                "steady baseline + consistent spacing could suggest organized execution, but may also read as controlled or rigid",
+                "legible mixed print-cursive forms may suggest practical communication, with less emphasis on warmth or expressiveness",
+                "moderate spaciousness and clean rhythm could suggest focus, but the controlled rhythm may also read as guarded or overly measured",
+                "simple letter forms and low decoration may read as direct and utility-focused, with a possible tradeoff of seeming dry or emotionally understated",
             ],
             "alternative_explanations": ["scan quality", "pen type", "writing speed", "copying from another source", "schooling or script conventions"],
             "confidence": "low",

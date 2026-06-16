@@ -14,7 +14,7 @@ license: mit
 
 InkPersona is a Hugging Face Spaces / Gradio app for AI handwriting style analysis.
 
-It accepts a full-HD scanned handwritten document, generates a persona-first graphology-inspired reading, and keeps scan observations, limitations, safety notes, and objective traits in a separate Detailed Analysis section.
+It accepts a full-HD scanned handwritten document, generates a direct persona-first graphology-inspired reading with both potential strengths and tradeoffs, and keeps scan observations, limitations, safety notes, and objective traits in a separate Detailed Analysis section.
 
 Important: handwriting alone is not a validated way to determine personality. InkPersona must not be used for clinical, hiring, legal, school, employment, or other high-stakes decisions.
 
@@ -140,6 +140,8 @@ The system prompt requires:
 - no deterministic personality claims
 - no protected/high-stakes claims
 - no medical/clinical/hiring judgments
+- direct, balanced persona language rather than praise, flattery, hype, or simping
+- at least two downside/tradeoff/risk observations when scan quality supports them
 
 The app may say:
 

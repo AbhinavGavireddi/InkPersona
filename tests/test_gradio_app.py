@@ -14,9 +14,10 @@ def test_format_report_contains_persona_first_then_detailed_analysis():
     assert "persona lens" in lowered
     assert "graphology-inspired persona sketch" in lowered
     assert "core persona impression" in lowered
-    assert "careful systems builder" in lowered
-    assert "working-style vibe" in lowered
-    assert "what the handwriting may suggest" in lowered
+    assert "controlled systems builder" in lowered
+    assert "direct read: strengths and tradeoffs" in lowered
+    assert "rigid" in lowered
+    assert "guarded" in lowered
     assert "detailed analysis" in lowered
     assert "objective trait observations" in lowered
     assert "not a validated way" in lowered

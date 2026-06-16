@@ -107,13 +107,13 @@ def format_report(result: AnalysisResult) -> str:
 
 ## Persona lens
 
-This reads like a **graphology-inspired persona sketch** — a vibe-level reflection from the handwriting style, not a factual personality verdict.
+This is a **graphology-inspired persona sketch** — a direct, low-confidence read from the handwriting style, not a factual personality verdict.
 
 ## Core persona impression
 
 {interpretation.get('style_summary', 'No persona summary returned.')}
 
-## What the handwriting may suggest
+## Direct read: strengths and tradeoffs
 
 {possible}
 

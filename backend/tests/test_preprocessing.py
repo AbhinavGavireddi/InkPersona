@@ -68,6 +68,10 @@ def test_prompt_includes_dual_image_preprocessing_context_when_available():
     assert "Use Image B for readability" in prompt
     assert "crop/width normalization" in prompt
     assert "Do not overstate personality certainty" in prompt
+    assert "candid and unsentimental" in prompt
+    assert "Do not flatter" in prompt
+    assert "both potential strengths and potential downsides/tradeoffs" in prompt
+    assert "At least two possible_impressions items MUST be downside/tradeoff/risk" in prompt
 
 
 def test_live_analyzer_sends_original_and_preprocessed_images_with_prompt_metadata(monkeypatch):
