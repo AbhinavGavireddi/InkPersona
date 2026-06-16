@@ -23,7 +23,9 @@ Important: handwriting alone is not a validated way to determine personality. In
 Create a Gradio Space, then push this repo with these root files:
 
 - `app.py`
-- `requirements.txt`
+- `requirements.txt` — generated from `pyproject.toml` for Hugging Face compatibility
+- `pyproject.toml`
+- `uv.lock`
 - `backend/`
 - `datasets/`
 - `README.md`
@@ -54,18 +56,22 @@ cp .env.example .env
 OPENAI_API_KEY=your_key_here
 ```
 
-3. Install and run:
+3. Install and run with uv:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python app.py
+uv sync --group dev
+uv run python app.py
 ```
 
 Open the printed local Gradio URL.
 
 You can also run without an API key by enabling “Use demo result instead of live OpenAI call.”
+
+To refresh Hugging Face's `requirements.txt` after changing `pyproject.toml`:
+
+```bash
+uv export --no-dev --format requirements-txt --no-hashes --output-file requirements.txt
+```
 
 ## Objective trait coverage
 
@@ -96,14 +102,13 @@ For Hugging Face deployment, the root `app.py` Gradio app is the deployment entr
 Root / Gradio tests:
 
 ```bash
-pytest tests
+uv run pytest tests
 ```
 
 Backend tests:
 
 ```bash
-cd backend
-pytest
+uv run pytest backend
 ```
 
 Legacy frontend tests:
