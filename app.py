@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -156,28 +157,34 @@ The persona reading above is based on visible handwriting traits such as slant, 
 """.strip()
 
 
-def analyze_for_gradio(image: Image.Image | None, use_demo: bool) -> tuple[str, dict[str, Any]]:
+def _json_for_display(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, indent=2, ensure_ascii=False) if payload else "{}"
+
+
+def analyze_for_gradio(image: Image.Image | None, use_demo: bool) -> tuple[str, str]:
     if use_demo:
         result = mock_analysis_result()
-        return format_report(result), result.model_dump()
+        payload = result.model_dump()
+        return format_report(result), _json_for_display(payload)
 
     if image is None:
-        return "Upload a handwritten scan first, choose the sample, or enable demo mode.", {}
+        return "Upload a handwritten scan first, choose the sample, or enable demo mode.", "{}"
 
     settings = _settings()
     if not settings.openai_api_key or settings.openai_api_key.startswith("replace_with") or settings.openai_api_key == "placeholder":
         return (
             "OPENAI_API_KEY is not configured. Add it in Hugging Face Space Settings → Secrets, "
             "then restart the Space. You can still use demo mode locally.",
-            {},
+            "{}",
         )
 
     try:
         png_bytes = _image_to_png_bytes(image)
         result = asyncio.run(analyze_handwriting_image(png_bytes, "image/png", settings))
-        return format_report(result), result.model_dump()
+        payload = result.model_dump()
+        return format_report(result), _json_for_display(payload)
     except Exception as exc:  # noqa: BLE001 - show user-facing Gradio error
-        return f"Analysis failed: {exc}", {}
+        return f"Analysis failed: {exc}", "{}"
 
 
 def _build_css() -> str:
@@ -403,10 +410,10 @@ def _build_css() -> str:
 
     .ink-grid {
       display: grid !important;
-      grid-template-columns: minmax(280px, .58fr) minmax(0, 1fr) !important;
+      grid-template-columns: minmax(310px, .52fr) minmax(0, 1fr) !important;
       gap: 14px !important;
-      min-height: calc(100vh - 62px);
-      align-items: stretch !important;
+      min-height: auto;
+      align-items: start !important;
     }
 
     .ink-card {
@@ -417,7 +424,6 @@ def _build_css() -> str:
       box-shadow: none !important;
     }
 
-    .ink-input-card,
     .ink-output-card {
       min-height: calc(100vh - 92px);
     }
@@ -425,11 +431,14 @@ def _build_css() -> str:
     .ink-input-card {
       display: flex;
       flex-direction: column;
+      gap: 10px !important;
+      min-height: auto;
     }
 
     .ink-output-card {
       display: flex;
       flex-direction: column;
+      min-height: calc(100vh - 92px);
       background:
         linear-gradient(90deg, rgba(25,59,209,.055) 1px, transparent 1px),
         var(--ink-panel) !important;
@@ -484,14 +493,30 @@ def _build_css() -> str:
       margin: 14px 0;
     }
 
+    .ink-actions {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) !important;
+      gap: 10px !important;
+      align-items: stretch !important;
+      margin-top: 2px !important;
+    }
+
+    .ink-actions button {
+      min-height: 42px !important;
+      width: 100% !important;
+      border-radius: 13px !important;
+      font-size: 14px !important;
+      font-weight: 760 !important;
+      padding: 0 12px !important;
+      white-space: nowrap !important;
+    }
+
     #analyze-btn {
-      border-radius: 16px !important;
-      min-height: 54px !important;
-      font-weight: 820 !important;
+      min-height: 42px !important;
       background: #191612 !important;
       border: 1px solid #191612 !important;
       color: #fffdf8 !important;
-      box-shadow: 0 12px 26px rgba(25, 22, 18, 0.18) !important;
+      box-shadow: 0 10px 20px rgba(25, 22, 18, 0.14) !important;
     }
 
     #analyze-btn:hover {
@@ -679,17 +704,18 @@ def build_app() -> gr.Blocks:
                         image = gr.Image(
                             type="pil",
                             label="Handwritten document scan",
-                            sources=["upload", "clipboard"],
-                            height=430,
+                            sources=["upload"],
+                            height=220,
                         )
                         use_demo = gr.Checkbox(
                             value=not configured,
                             label="Use static demo result",
                             info="Off calls the configured OpenAI vision model. On uses the local demo only; no cache, no LLM call.",
                         )
-                        sample = gr.Button("Load sample image", variant="secondary")
+                        with gr.Row(equal_height=True, elem_classes=["ink-actions"]):
+                            sample = gr.Button("Load sample", variant="secondary")
+                            analyze = gr.Button("Read handwriting", variant="primary", elem_id="analyze-btn")
                         gr.HTML("<p class='ink-sample-caption'>Sample: blue-ink cursive note about Andrej Karpathy and vibe-coding. Load it, then choose demo or live analysis.</p>")
-                        analyze = gr.Button("Read handwriting", variant="primary", elem_id="analyze-btn")
                         gr.HTML(
                             f"""
                             <div class='ink-note'><strong>Best input:</strong> uncropped JPEG/PNG/WEBP, 1080p or higher. {SAFE_USE_NOTE}</div>
@@ -708,7 +734,7 @@ def build_app() -> gr.Blocks:
                             with gr.Tab("Persona report"):
                                 report = gr.Markdown(value=EMPTY_REPORT, label="Report")
                             with gr.Tab("Structured JSON"):
-                                raw_json = gr.JSON(label="Structured JSON")
+                                raw_json = gr.Textbox(value="{}", label="Structured JSON", lines=24, max_lines=24, interactive=False)
                         gr.HTML(
                             "<p class='ink-sample-caption'>If live output returns imperfect JSON, InkPersona normalizes common shorthand before rendering.</p>"
                         )

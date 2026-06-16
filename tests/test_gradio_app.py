@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from PIL import Image
@@ -25,16 +26,17 @@ def test_format_report_contains_persona_first_then_detailed_analysis():
 
 def test_demo_analysis_returns_structured_json():
     report, payload = analyze_for_gradio(None, True)
+    data = json.loads(payload)
     assert "InkPersona Persona Reading" in report
-    assert payload["product_name"] == "InkPersona"
-    assert "objective_traits" in payload
-    assert payload["interpretation"]["confidence"] == "low"
+    assert data["product_name"] == "InkPersona"
+    assert "objective_traits" in data
+    assert data["interpretation"]["confidence"] == "low"
 
 
 def test_live_analysis_without_image_returns_guidance():
     report, payload = analyze_for_gradio(None, False)
     assert "Upload a handwritten scan first" in report
-    assert payload == {}
+    assert payload == "{}"
 
 
 def test_image_conversion_outputs_png_bytes():
@@ -73,7 +75,7 @@ def test_gradio_app_builds_with_clean_ui_and_sample_example():
     demo = build_app()
     config_text = str(demo.config)
     assert "InkPersona" in config_text
-    assert "Load sample image" in config_text
+    assert "Load sample" in config_text
     assert "Reading desk" in config_text
     assert "Use static demo result" in config_text
     assert "Ready for a handwriting sample" in config_text
