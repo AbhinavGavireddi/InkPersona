@@ -181,6 +181,51 @@ class ObjectiveTraits(BaseModel):
     form: FormTraits
     consistency_and_legibility: ConsistencyAndLegibilityTraits
 
+    @model_validator(mode="before")
+    @classmethod
+    def accept_model_trait_groups_as_lists(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+
+        normalized = dict(value)
+        for group_name, group_value in list(normalized.items()):
+            if not isinstance(group_value, list):
+                continue
+
+            trait_names = OBJECTIVE_TRAIT_GROUPS.get(group_name)
+            if not trait_names:
+                continue
+
+            keyed_group: dict[str, Any] = {}
+            for index, observation in enumerate(group_value):
+                trait_name = None
+                if isinstance(observation, dict):
+                    raw_trait_name = observation.get("trait") or observation.get("name") or observation.get("field")
+                    if raw_trait_name:
+                        candidate = str(raw_trait_name).strip().lower().replace(" ", "_").replace("-", "_")
+                        if candidate in trait_names:
+                            trait_name = candidate
+
+                if trait_name is None and index < len(trait_names):
+                    trait_name = trait_names[index]
+
+                if trait_name:
+                    keyed_group[trait_name] = observation
+
+            for trait_name in trait_names:
+                keyed_group.setdefault(
+                    trait_name,
+                    {
+                        "value": "not assessed",
+                        "confidence": "low",
+                        "evidence": "Model returned an incomplete list for this trait group; this trait was not specifically assessed.",
+                    },
+                )
+
+            normalized[group_name] = keyed_group
+
+        return normalized
+
 
 class Interpretation(BaseModel):
     style_summary: str
