@@ -25,9 +25,12 @@ def build_user_prompt(preprocessing_summary: str | None = None) -> str:
         f"- {group}: {', '.join(names)}" for group, names in OBJECTIVE_TRAIT_GROUPS.items()
     )
     preprocessing_note = (
-        "\nPreprocessing applied before this image reached you:\n"
+        "\nYou will receive two images: Image A is the original upload, and Image B is the cleaned/preprocessed version. "
+        "Use Image B for readability, baseline, spacing, slant, layout, line rhythm, and letter-form structure. "
+        "Use Image A for ink texture, pressure clues, stroke variation, pen/paper context, lighting, and details preprocessing may remove.\n"
+        "Preprocessing applied to Image B:\n"
         f"{preprocessing_summary}\n"
-        "Use the cleaned image for readability, but treat projection metadata only as supporting visual context. "
+        "Treat projection metadata only as supporting visual context. "
         "Do not overstate personality certainty from preprocessing-derived measurements.\n"
         if preprocessing_summary
         else ""

@@ -37,7 +37,8 @@ async def analyze_handwriting_image(content: bytes, content_type: str, settings:
     if content_type not in ALLOWED_IMAGE_TYPES:
         raise AnalysisError("Unsupported image type. Upload JPEG, PNG, or WEBP.")
     preprocessed = preprocess_handwriting_image(content)
-    data_url = encode_data_url(preprocessed.content, preprocessed.content_type)
+    original_data_url = encode_data_url(content, content_type)
+    cleaned_data_url = encode_data_url(preprocessed.content, preprocessed.content_type)
     client = AsyncOpenAI(api_key=api_key, timeout=settings.inkpersona_request_timeout_seconds)
 
     response = await client.chat.completions.create(
@@ -51,7 +52,10 @@ async def analyze_handwriting_image(content: bytes, content_type: str, settings:
                 "role": "user",
                 "content": [
                     {"type": "text", "text": build_user_prompt(preprocessed.summary)},
-                    {"type": "image_url", "image_url": {"url": data_url, "detail": "high"}},
+                    {"type": "text", "text": "Image A: original upload. Use this for ink texture, pressure clues, stroke variation, paper/lighting context, and anything preprocessing may remove."},
+                    {"type": "image_url", "image_url": {"url": original_data_url, "detail": "high"}},
+                    {"type": "text", "text": "Image B: cleaned/preprocessed version. Use this for readability, baseline, spacing, slant, layout, line rhythm, and letter-form structure."},
+                    {"type": "image_url", "image_url": {"url": cleaned_data_url, "detail": "high"}},
                 ],
             },
         ],

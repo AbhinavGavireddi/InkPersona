@@ -58,15 +58,19 @@ def test_preprocessing_crops_excess_white_margin():
     assert bottom < result.metadata["original_size"][1]
 
 
-def test_prompt_includes_preprocessing_context_when_available():
+def test_prompt_includes_dual_image_preprocessing_context_when_available():
     prompt = build_user_prompt("Preprocessed before vision-model analysis using crop/width normalization.")
 
-    assert "Preprocessing applied before this image reached you" in prompt
+    assert "You will receive two images" in prompt
+    assert "Image A is the original upload" in prompt
+    assert "Image B is the cleaned/preprocessed version" in prompt
+    assert "Use Image A for ink texture" in prompt
+    assert "Use Image B for readability" in prompt
     assert "crop/width normalization" in prompt
     assert "Do not overstate personality certainty" in prompt
 
 
-def test_live_analyzer_sends_preprocessed_png_and_prompt_metadata(monkeypatch):
+def test_live_analyzer_sends_original_and_preprocessed_images_with_prompt_metadata(monkeypatch):
     captured: dict[str, object] = {}
 
     class FakeCompletions:
@@ -100,8 +104,19 @@ def test_live_analyzer_sends_preprocessed_png_and_prompt_metadata(monkeypatch):
 
     assert isinstance(result, AnalysisResult)
     user_content = captured["messages"][1]["content"]
+    assert len(user_content) == 5
+    assert [item["type"] for item in user_content] == ["text", "text", "image_url", "text", "image_url"]
     text_prompt = user_content[0]["text"]
-    image_url = user_content[1]["image_url"]["url"]
-    assert "Preprocessing applied before this image reached you" in text_prompt
+    original_label = user_content[1]["text"]
+    original_image_url = user_content[2]["image_url"]["url"]
+    cleaned_label = user_content[3]["text"]
+    cleaned_image_url = user_content[4]["image_url"]["url"]
+
+    assert "You will receive two images" in text_prompt
+    assert "Image A is the original upload" in text_prompt
+    assert "Image B is the cleaned/preprocessed version" in text_prompt
     assert "bilateral denoising" in text_prompt
-    assert image_url.startswith("data:image/png;base64,")
+    assert "Image A: original upload" in original_label
+    assert "Image B: cleaned/preprocessed version" in cleaned_label
+    assert original_image_url.startswith("data:image/jpeg;base64,")
+    assert cleaned_image_url.startswith("data:image/png;base64,")
