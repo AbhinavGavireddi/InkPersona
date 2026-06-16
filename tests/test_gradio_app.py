@@ -76,8 +76,8 @@ def test_gradio_app_builds_with_clean_ui_and_sample_example():
     config_text = str(demo.config)
     assert "InkPersona" in config_text
     assert "Load sample" in config_text
-    assert "Reading desk" in config_text
-    assert "Use static demo result" in config_text
+    assert "Add a sample" in config_text
+    assert "Preview mode" in config_text
     assert "Ready for a handwriting sample" in config_text
     assert EMPTY_REPORT.startswith("# Ready")
     assert "Persona report" in config_text

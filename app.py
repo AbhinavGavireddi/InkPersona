@@ -21,21 +21,21 @@ SAMPLE_IMAGE_PATH = ROOT_DIR / "assets" / "sample-andrej-karpathy-handwriting.jp
 load_dotenv(ROOT_DIR / ".env")
 
 APP_TITLE = "InkPersona"
-APP_SUBTITLE = "Handwriting style readings with receipts, not overclaims."
+APP_SUBTITLE = "A handwriting-style reading for reflection, backed by visible traits."
 SAFE_USE_NOTE = (
-    "Avoid sensitive documents during public testing. Live analysis sends the uploaded image "
-    "to the configured vision model provider."
+    "Avoid sensitive documents during public testing. Live readings process the uploaded image "
+    "with the configured analysis provider."
 )
 EMPTY_REPORT = """
 # Ready for a handwriting sample
 
-Load the sample image or upload a clean page. The reading will appear here in three layers:
+Load the sample or upload a clear handwriting image. Your reading will appear in three parts:
 
-- Persona sketch: the first-pass handwriting impression
-- Evidence: visible traits such as spacing, baseline, rhythm, slant, and form
-- Boundaries: alternative explanations and claims InkPersona refuses to make
+- Persona sketch
+- Visible handwriting cues
+- Limits and alternate explanations
 
-Use static demo for a quick UI preview. Turn it off when an OpenAI key is configured to call the live vision model.
+Use preview mode for a quick sample result. Turn it off when live analysis is enabled.
 """.strip()
 
 
@@ -190,21 +190,21 @@ def analyze_for_gradio(image: Image.Image | None, use_demo: bool) -> tuple[str, 
 def _build_css() -> str:
     return """
     :root {
-      --ink-paper: #f5f2ec;
-      --ink-panel: #fffdf8;
-      --ink-panel-2: #fbf7ef;
-      --ink-rule: rgba(36, 30, 24, 0.14);
-      --ink-rule-strong: rgba(36, 30, 24, 0.24);
-      --ink-text: #191612;
-      --ink-muted: #696055;
-      --ink-faint: #968d82;
-      --ink-blue: #193bd1;
-      --ink-blue-dark: #10247a;
-      --ink-blue-wash: rgba(25, 59, 209, 0.075);
+      --ink-paper: #f3f0e8;
+      --ink-panel: #fffdfa;
+      --ink-panel-2: #faf6ed;
+      --ink-rule: rgba(31, 27, 22, 0.12);
+      --ink-rule-strong: rgba(31, 27, 22, 0.22);
+      --ink-text: #181512;
+      --ink-muted: #61584e;
+      --ink-faint: #958a7d;
+      --ink-blue: #1d3fd4;
+      --ink-blue-dark: #11236f;
+      --ink-blue-wash: rgba(29, 63, 212, 0.07);
       --ink-green: #0b6f4f;
       --ink-amber: #8f5b08;
       --ink-red: #9f1d1d;
-      --ink-shadow: 0 20px 80px rgba(32, 25, 17, 0.08);
+      --ink-shadow: 0 22px 70px rgba(32, 25, 17, 0.075);
     }
 
     .gradio-container {
@@ -214,10 +214,10 @@ def _build_css() -> str:
       margin: 0 auto !important;
       padding: 14px !important;
       background:
-        linear-gradient(90deg, rgba(25, 59, 209, 0.035) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(25, 59, 209, 0.035) 1px, transparent 1px),
-        var(--ink-paper) !important;
-      background-size: 32px 32px, 32px 32px, auto !important;
+        radial-gradient(circle at 16% 10%, rgba(29, 63, 212, 0.10), transparent 28%),
+        radial-gradient(circle at 88% 88%, rgba(143, 91, 8, 0.09), transparent 30%),
+        linear-gradient(180deg, #faf7f0 0%, var(--ink-paper) 100%) !important;
+      background-size: auto !important;
       color: var(--ink-text) !important;
       font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif !important;
     }
@@ -232,8 +232,8 @@ def _build_css() -> str:
 
     .ink-shell {
       display: grid !important;
-      grid-template-columns: minmax(280px, 0.72fr) minmax(520px, 1.65fr) !important;
-      gap: 16px;
+      grid-template-columns: minmax(270px, 0.68fr) minmax(560px, 1.7fr) !important;
+      gap: 14px;
       min-height: calc(100vh - 34px);
       align-items: stretch;
       overflow: hidden;
@@ -260,8 +260,8 @@ def _build_css() -> str:
     }
 
     .ink-brand-panel {
-      border-radius: 28px !important;
-      padding: 22px !important;
+      border-radius: 26px !important;
+      padding: 24px !important;
       position: sticky;
       top: 14px;
       min-height: calc(100vh - 34px);
@@ -307,13 +307,13 @@ def _build_css() -> str:
     .ink-title {
       position: relative;
       z-index: 1;
-      margin: 52px 0 16px;
+      margin: 36px 0 14px;
       max-width: 560px;
       color: var(--ink-text);
       font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-      font-size: clamp(52px, 8.2vw, 128px);
-      line-height: .82;
-      letter-spacing: -0.075em;
+      font-size: clamp(44px, 6.2vw, 98px);
+      line-height: .88;
+      letter-spacing: -0.058em;
       font-weight: 540;
     }
 
@@ -327,10 +327,10 @@ def _build_css() -> str:
     .ink-lede {
       position: relative;
       z-index: 1;
-      max-width: 610px;
+      max-width: 540px;
       color: #443b32;
-      font-size: clamp(16px, 1.45vw, 21px);
-      line-height: 1.5;
+      font-size: clamp(15.5px, 1.24vw, 19px);
+      line-height: 1.48;
       letter-spacing: -0.015em;
       margin: 0;
     }
@@ -343,14 +343,14 @@ def _build_css() -> str:
       gap: 1px;
       border: 1px solid var(--ink-rule);
       background: var(--ink-rule);
-      border-radius: 20px;
+      border-radius: 18px;
       overflow: hidden;
-      margin-top: 30px;
+      margin-top: 26px;
     }
 
     .ink-proof-cell {
-      min-height: 82px;
-      padding: 14px;
+      min-height: 74px;
+      padding: 13px;
       background: rgba(255, 253, 248, 0.74);
     }
 
@@ -365,7 +365,7 @@ def _build_css() -> str:
 
     .ink-proof-value {
       color: var(--ink-text);
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 760;
       line-height: 1.25;
     }
@@ -373,54 +373,54 @@ def _build_css() -> str:
     .ink-specimen-rail {
       position: relative;
       z-index: 1;
-      margin-top: 28px;
+      margin-top: 24px;
       border-top: 1px solid var(--ink-rule);
       padding-top: 18px;
       display: grid;
-      grid-template-columns: 54px 1fr;
+      grid-template-columns: 50px 1fr;
       gap: 14px;
       align-items: start;
     }
 
     .ink-specimen-index {
-      height: 54px;
+      height: 50px;
       border: 1px solid var(--ink-rule-strong);
       border-radius: 999px;
       display: grid;
       place-items: center;
       color: var(--ink-blue);
       font-family: ui-serif, Georgia, serif;
-      font-size: 22px;
+      font-size: 21px;
       font-style: italic;
       background: var(--ink-blue-wash);
     }
 
     .ink-specimen-copy {
       color: var(--ink-muted);
-      font-size: 13px;
-      line-height: 1.55;
+      font-size: 14px;
+      line-height: 1.5;
       margin: 0;
     }
 
     .ink-work-panel {
-      border-radius: 28px !important;
-      padding: 14px !important;
+      border-radius: 26px !important;
+      padding: 12px !important;
       min-height: calc(100vh - 34px);
     }
 
     .ink-grid {
       display: grid !important;
-      grid-template-columns: minmax(310px, .52fr) minmax(0, 1fr) !important;
-      gap: 14px !important;
+      grid-template-columns: minmax(320px, .5fr) minmax(0, 1fr) !important;
+      gap: 12px !important;
       min-height: auto;
       align-items: start !important;
     }
 
     .ink-card {
       border: 1px solid var(--ink-rule) !important;
-      border-radius: 22px !important;
+      border-radius: 20px !important;
       padding: 18px !important;
-      background: rgba(255, 253, 248, 0.78) !important;
+      background: rgba(255, 253, 248, 0.84) !important;
       box-shadow: none !important;
     }
 
@@ -439,17 +439,14 @@ def _build_css() -> str:
       display: flex;
       flex-direction: column;
       min-height: calc(100vh - 92px);
-      background:
-        linear-gradient(90deg, rgba(25,59,209,.055) 1px, transparent 1px),
-        var(--ink-panel) !important;
-      background-size: 28px 28px, auto !important;
+      background: var(--ink-panel) !important;
     }
 
     .ink-section-title {
       margin: 0 0 6px;
       color: var(--ink-text);
       font-family: ui-serif, Georgia, Cambria, serif;
-      font-size: 25px;
+      font-size: 24px;
       font-weight: 520;
       letter-spacing: -0.035em;
     }
@@ -457,18 +454,18 @@ def _build_css() -> str:
     .ink-helper {
       color: var(--ink-muted);
       font-size: 14px;
-      line-height: 1.55;
-      margin: 0 0 16px;
+      line-height: 1.5;
+      margin: 0 0 14px;
     }
 
     .ink-note,
     .ink-boundary {
       color: #4c4238;
-      font-size: 12.5px;
+      font-size: 12.75px;
       line-height: 1.5;
       padding: 12px 13px;
       border: 1px solid var(--ink-rule);
-      border-radius: 16px;
+      border-radius: 14px;
       background: rgba(251, 247, 239, 0.82);
     }
 
@@ -481,7 +478,7 @@ def _build_css() -> str:
 
     .ink-sample-caption {
       color: var(--ink-muted);
-      font-size: 12.5px;
+      font-size: 12.75px;
       line-height: 1.45;
       margin-top: 8px;
     }
@@ -504,7 +501,7 @@ def _build_css() -> str:
     .ink-actions button {
       min-height: 42px !important;
       width: 100% !important;
-      border-radius: 13px !important;
+      border-radius: 12px !important;
       font-size: 14px !important;
       font-weight: 760 !important;
       padding: 0 12px !important;
@@ -548,8 +545,8 @@ def _build_css() -> str:
     .ink-output .output-markdown {
       color: var(--ink-text) !important;
       opacity: 1 !important;
-      line-height: 1.68 !important;
-      max-width: 74ch !important;
+      line-height: 1.62 !important;
+      max-width: 78ch !important;
       overflow-wrap: anywhere !important;
       word-break: normal !important;
     }
@@ -560,8 +557,8 @@ def _build_css() -> str:
     .ink-output th {
       color: #29231e !important;
       opacity: 1 !important;
-      font-size: 15px !important;
-      line-height: 1.7 !important;
+      font-size: 14.5px !important;
+      line-height: 1.64 !important;
     }
 
     .ink-output h1,
@@ -570,17 +567,17 @@ def _build_css() -> str:
       color: #15110e !important;
       opacity: 1 !important;
       letter-spacing: -0.035em !important;
-      margin-top: 1.05rem !important;
+      margin-top: 1rem !important;
       margin-bottom: .55rem !important;
     }
 
     .ink-output h1 {
       font-family: ui-serif, Georgia, Cambria, serif !important;
-      font-size: 34px !important;
+      font-size: 31px !important;
       font-weight: 520 !important;
     }
-    .ink-output h2 { font-size: 20px !important; }
-    .ink-output h3 { font-size: 16px !important; color: var(--ink-blue-dark) !important; }
+    .ink-output h2 { font-size: 19px !important; }
+    .ink-output h3 { font-size: 15.5px !important; color: var(--ink-blue-dark) !important; }
 
     .ink-output strong {
       color: #15110e !important;
@@ -617,6 +614,19 @@ def _build_css() -> str:
       border-radius: 16px !important;
     }
 
+    .upload-container,
+    .image-container button.boundedheight {
+      border: 1.5px dashed rgba(29, 63, 212, 0.30) !important;
+      background: rgba(255, 253, 248, 0.72) !important;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease !important;
+    }
+
+    .image-container button.boundedheight:hover,
+    .upload-container:hover {
+      border-color: rgba(29, 63, 212, 0.58) !important;
+      background: rgba(29, 63, 212, 0.045) !important;
+    }
+
     table {
       border-radius: 14px !important;
       overflow: hidden !important;
@@ -647,7 +657,7 @@ def _build_css() -> str:
 def build_app() -> gr.Blocks:
     trait_count = sum(len(items) for items in OBJECTIVE_TRAIT_GROUPS.values())
     configured = _has_live_openai_key()
-    secret_status = "Live AI ready" if configured else "Demo mode ready"
+    secret_status = "Live ready" if configured else "Preview ready"
     secret_icon = "●"
 
     with gr.Blocks(
@@ -665,29 +675,29 @@ def build_app() -> gr.Blocks:
                     </div>
                     <div>
                       <h1 class='ink-title'>Ink<span>Persona</span></h1>
-                      <p class='ink-lede'>A quieter handwriting-reading desk: upload a sample, get a persona-style interpretation first, then inspect the visible traits behind it.</p>
+                      <p class='ink-lede'>Upload a handwriting sample. Get a persona-style reading first, then the visual cues behind it.</p>
                       <div class='ink-proof-grid'>
                         <div class='ink-proof-cell'>
-                          <div class='ink-proof-label'>Mode</div>
+                          <div class='ink-proof-label'>Status</div>
                           <div class='ink-proof-value'>{secret_icon} {secret_status}</div>
                         </div>
                         <div class='ink-proof-cell'>
-                          <div class='ink-proof-label'>Coverage</div>
-                          <div class='ink-proof-value'>{trait_count} visible handwriting traits</div>
+                          <div class='ink-proof-label'>Checks</div>
+                          <div class='ink-proof-value'>{trait_count} visible cues</div>
                         </div>
                         <div class='ink-proof-cell'>
-                          <div class='ink-proof-label'>Output</div>
-                          <div class='ink-proof-value'>Persona first, evidence below</div>
+                          <div class='ink-proof-label'>Reading</div>
+                          <div class='ink-proof-value'>Persona first</div>
                         </div>
                         <div class='ink-proof-cell'>
-                          <div class='ink-proof-label'>Boundary</div>
-                          <div class='ink-proof-value'>No diagnosis · no hiring claims</div>
+                          <div class='ink-proof-label'>Limits</div>
+                          <div class='ink-proof-value'>No diagnosis</div>
                         </div>
                       </div>
                     </div>
                     <div class='ink-specimen-rail'>
                       <div class='ink-specimen-index'>Aa</div>
-                      <p class='ink-specimen-copy'>{APP_SUBTITLE} Designed as a reading desk, not a chatbot page: document on the left, report on the right, evidence always within reach.</p>
+                      <p class='ink-specimen-copy'>{APP_SUBTITLE}</p>
                     </div>
                     """
                 )
@@ -697,25 +707,25 @@ def build_app() -> gr.Blocks:
                     with gr.Column(scale=4, elem_classes=["ink-card", "ink-input-card"]):
                         gr.HTML(
                             """
-                            <h2 class='ink-section-title'>Add handwriting</h2>
-                            <p class='ink-helper'>Use a clean page photo or the built-in Andrej Karpathy sample. The live/demo switch below makes the model path explicit.</p>
+                            <h2 class='ink-section-title'>Add a sample</h2>
+                            <p class='ink-helper'>Use a clear page photo or start with the built-in sample.</p>
                             """
                         )
                         image = gr.Image(
                             type="pil",
                             label="Handwritten document scan",
                             sources=["upload"],
-                            height=220,
+                            height=205,
                         )
                         use_demo = gr.Checkbox(
                             value=not configured,
-                            label="Use static demo result",
-                            info="Off calls the configured OpenAI vision model. On uses the local demo only; no cache, no LLM call.",
+                            label="Preview mode",
+                            info="Preview mode shows a sample reading. Turn it off for live analysis when enabled.",
                         )
                         with gr.Row(equal_height=True, elem_classes=["ink-actions"]):
                             sample = gr.Button("Load sample", variant="secondary")
                             analyze = gr.Button("Read handwriting", variant="primary", elem_id="analyze-btn")
-                        gr.HTML("<p class='ink-sample-caption'>Sample: blue-ink cursive note about Andrej Karpathy and vibe-coding. Load it, then choose demo or live analysis.</p>")
+                        gr.HTML("<p class='ink-sample-caption'>Sample handwriting is included for a quick first read.</p>")
                         gr.HTML(
                             f"""
                             <div class='ink-note'><strong>Best input:</strong> uncropped JPEG/PNG/WEBP, 1080p or higher. {SAFE_USE_NOTE}</div>
@@ -726,8 +736,8 @@ def build_app() -> gr.Blocks:
                     with gr.Column(scale=8, elem_classes=["ink-card", "ink-output-card", "ink-output"]):
                         gr.HTML(
                             """
-                            <h2 class='ink-section-title'>Reading desk</h2>
-                            <p class='ink-helper'>The report uses the wide panel: persona interpretation first, then alternatives, limitations, and structured JSON.</p>
+                            <h2 class='ink-section-title'>Reading</h2>
+                            <p class='ink-helper'>Persona first. Evidence and limits stay close by.</p>
                             """
                         )
                         with gr.Tabs():
@@ -736,7 +746,7 @@ def build_app() -> gr.Blocks:
                             with gr.Tab("Structured JSON"):
                                 raw_json = gr.Textbox(value="{}", label="Structured JSON", lines=24, max_lines=24, interactive=False)
                         gr.HTML(
-                            "<p class='ink-sample-caption'>If live output returns imperfect JSON, InkPersona normalizes common shorthand before rendering.</p>"
+                            "<p class='ink-sample-caption'>Structured data is available for review and debugging.</p>"
                         )
 
         sample.click(load_sample_image, outputs=[image, use_demo])
